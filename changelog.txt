@@ -1,0 +1,108 @@
+[B]Version 0.3.10[/B]
+BETA 3 -fixed install let's hope.
+
+[B]Version 0.3.7[/B]
+BETA 3
+
+[B]Version 0.3.4[/B]
+Started crappy artwork
+
+[B]Version 0.3.3[/B]
+-Metadata
+-Custom Trakt Lists
+
+[B]Version 0.3.1[/B]
+-Bug fixes
+-SQLite
+-Upgrade
+-WarezTuga
+
+[B]Version 0.3.0[/B]
+-Live browsing
+-Independent DB integration
+-Trakt, IMDB watchlists
+-Furk
+
+[B]Version 0.2.8[/B]
+debugging
+
+[B]Version 0.2.7[/B]
+status log fix
+
+[B]Version 0.2.6[/B]
+-Fixed the issues subtitles. 
+-Added Tratk.tv trending/recommened lists for tv shows. Still need to finish movies
+-Changed the search behavior to return a folder results for multiple adds
+-Added a couple sort features for the link results, sort by host or by view count
+-Added a local election system. TRW keeps track of the most popular mirror and picks it by default.
+-I think I fixed the service errors for the autoupdater and maude with windows
+-fixed billionuploads again
+
+[B]Version 0.2.4[/B]
+-Incremental update fix
+
+[B]Version 0.2.3[/B]
+-Added movie and show genres.
+-Added year to movie and show schema to resolve remake issues
+
+[B]Version 0.2.1[/B]
+Beta 2
+-Added wareztuga movie and tv support (excellent quality, but needs a free account to work)
+-Added Vidics.ch movie and tv support
+-Disabled Fastpass for now
+-Moved database and site scraping functions to a separate module
+-Fixed Icefilms Movereel and Billionsuploads
+-Mirror filtering disable/enable
+-Re-worked movie handling
+-Fixed providers table unique index
+-Many more...
+
+[B]Version 0.1.2[/B]
+Added autoflag and subscription merge functions. Added database upgrade method.
+
+[B]Version 0.1.0[/B]
+-First Beta release.
+
+[B]Version 0.0.8[/B]
+-Added provider managment
+-Added FAQ to home menu
+-Altered database unique keys
+
+[B]Version 0.0.7[/B]
+-Minor database fix.
+-Added local resolver support for 1channel
+
+[B]Version 0.0.6[/B]
+-Fix missing current column in rw_updata_status.
+-Need to alter exising table or create a new DB.
+
+[B]Version 0.0.5[/B]
+-Dropped year from Show directory for future site compatability.
+-Removed icefilms mirror cache, stopped working
+-Started fastpass.ms support not complete
+-Added single subscription update
+-Added subscription enabled flag to allow removal of discontinued tv shows from continued update.
+[B]This release requires removal of pervious version database theroyalwe.db[/B] 
+
+[B]Version 0.0.3[/B]
+Pre-alpha release.
+-Added Mirror Caching
+-Initial MySQL support complete.
+-Support for Icefilms (movies/tv) with icremental scraping
+-Support for 1channel (tv/movies) with icremental scraping
+-AutoUpdater Service Hooks added.
+[B]This release requires removal of pervious version database theroyalwe.db[/B] 
+
+[B]Version 0.0.2[/B]
+Pre-alpha release.
+-Initial MySQL support complete.
+-Support for Icefilms (movies/tv) with icremental scraping
+-Support for 1channel (tv)
+-Automatic updates are not currently working.
+
+[B]Version 0.0.1[/B]
+-Pre-alpha release.
+-MySQL support not complete.
+
+[B]Version 0.0.0[/B]
+-Initial pre-alpha release.

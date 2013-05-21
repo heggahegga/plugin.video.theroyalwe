@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.theroyalwe" name="The Royal We" version="0.3.12" provider-name="DudeHere">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+        <import addon="script.module.simplejson"/>
+        <import addon="script.module.elementtree"/>
+        <import addon="script.module.beautifulsoup"/>
+	<import addon="service.theroyalwe.autoupdater" version="0.1.0"/>
+	<import addon="script.xbmc.debug.log" version="12.0.0"/>
+	<import addon="script.module.donnie" version="0.1.5"/>
+        <import addon="script.module.metahandler" version="1.0.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+	<import addon="script.module.myconnpy"     version="0.3.2"/>
+	<import addon="script.module.urlresolver"  version="0.0.1"/>
+        <import addon="script.common.plugin.cache" version="0.9.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Integrate streaming content into the library</summary>
+        <description>Turns your XBMC into an instant free on-demand media-center. Browse the play movies and series found on multiple sites directly from your library. Currently supports icefilms.com, 1channel.ch with more to come.</description>
+    </extension>
+</addon>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<strings>
+	<!-- Providers -->
+	<string id="30100">Enable Icefilms</string>
+	<string id="30101">     Base URL</string>
+	<string id="30102">Enable 1Channel</string>
+	<string id="30103">     1Channel URL</string>
+	<string id="30104">Enable FastPassTV</string>
+	<string id="30105">     FastPassTV URL</string>
+	<string id="30106">Enable WarezTuga</string>
+	<string id="30107">     FastPassTV URL</string>
+	<string id="30108">Enable Vidics</string>
+	<string id="30109">Enable Furk</string>
+	<string id="30110">Enable Alluc</string>
+	<string id="30111">Enable TubePlus</string>
+	<!-- Accounts -->
+	<string id="30200">Hide successful login nofifications</string>
+	<string id="30201">    Username</string>
+	<string id="30202">    Password</string>
+	<string id="30203">    Real-Debrid</string>
+	<string id="30204">    Movreel</string>
+
+	<string id="30205">URL Resolver</string>
+	<string id="30206">WarezTuga Username</string>
+	<string id="30207">WarezTuga Password</string>
+	<string id="30208">Furk Username</string>
+	<string id="30209">Furk Password</string>
+	<!-- Database -->
+	<string id="30500">Use SQLite Database</string>
+	<string id="30501">Use MySQL Database</string>
+	<string id="30502">    MySQL Host</string>
+	<string id="30503">    Database VideoLibrary Name</string>
+	<string id="30504">    Username</string>
+	<string id="30505">    Password</string>
+	<string id="30506">    SQLite VideoLibrary Name</string>
+	<!-- Directories -->
+	<string id="30300">Use custom directory</string>
+	<string id="30301">    Movie directory</string>	
+	<string id="30302">Use filters</string>
+	<string id="30303">    Released later than</string>
+	<string id="30304">    HD-only</string>
+	<string id="30400">Use custom directory</string>
+	<string id="30401">    TV show directory</string>	
+	<string id="30402">Use filters</string>
+	<string id="30403">    Released later than</string>
+	<!-- Automatic Update -->
+	<string id="30600">Enable Automatic Updates</string>
+	<string id="30601">    Get new episodes from subscribed TV shows</string>
+	<string id="30602">    Cache Mirrors from subscribed TV shows</string>
+	<string id="30603">    Get new TV Shows</string>
+	<string id="30604">    Get new Movies</string>
+	<string id="30605">    Autoupdate VideoLibrary</string>
+	<string id="30606">    Autodownload artwork</string>
+	<string id="30607">    Update Interval</string>
+	<string id="30608">Enable Automatic Backups</string>
+	<string id="30609">    Backup Interval</string>
+</strings>

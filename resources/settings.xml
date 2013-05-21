@@ -1,0 +1,64 @@
+<settings>
+	<category label="General">
+		<setting id="enable-silent-updates" type="bool" label="Enable silent updates" default="false"/>
+		<setting id="enable-autorank" type="bool" label="Enable link ranking" default="false"/>
+		<setting id="enable-autoplay" type="bool" label="    Enable autoplay" default="false"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="prefer-hd" type="bool" label="Prefer HD links" default="false"/>
+		<setting id="enable-mirror-caching" type="bool" label="Enable mirror caching" default="false"/>
+		<setting id="mirror-cache-limit" type="number" label="    Cached mirrors expire in (Hours)" default="1"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-metadata" type="bool" label="Enable MetaData" default="false"/>
+		<setting id="upgrade-status" type="number" visible="false" default="0"/>
+		<setting id="last-path" type="string" visible="false" default="0"/>
+		<setting id="database-settings" label="Database Settings" type="action" action="RunScript($CWD/resources/lib/donnie_settings.py, '')"/>
+	</category>
+	<category label="Support">
+		<setting id="logging-level" type="enum" values="Normal|Debugging" label="Logging Level" default="0"/>
+	</category>
+	<category label="Providers">
+		<setting id="enable-provder-filtering" type="bool" label="Enable provider filtering" default="true"/>		
+		<setting id="enable-icefilms" type="bool" label="30100" default="true"/>
+		<setting id="icefilms-base-url" type="text" label="30101" default="icefilms.info" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-1channel" type="bool" label="30102" default="true"/>
+		<setting id="1channel-base-url" type="text" label="30101" default="1channel.ch" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-alluc" type="bool" label="30110" default="true"/>
+		<setting id="alluc-base-url" type="text" label="30101" default="alluc.org" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-tubeplus" type="bool" label="30111" default="true"/>
+		<setting id="tubeplus-base-url" type="text" label="30101" default="tubeplus.me" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-wareztuga" type="bool" label="30106" default="false"/>
+		<setting id="wareztuga-base-url" type="text" label="30101" default="wareztuga.me" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-vidics" type="bool" label="30108" default="true"/>
+		<setting id="vidics-base-url" type="text" label="30101" default="vidics.ch" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-furk" type="bool" label="30109" default="false"/>
+		<setting id="furk-base-url" type="text" label="30101" default="furk.net" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+	</category>
+	<category label="Directories">
+		<setting id="movie_subfolders" type="bool" label="Create Movie Subfolders" default="true"/>
+		<setting id="movie_custom_directory" type="bool" label="30300" default="false"/>
+		<setting id="movie_directory" type="folder" label="30301" default="" enable="!eq(-1,false)"/>
+		<setting id="tv_show_custom_directory" type="bool" label="30400" default="false"/>
+		<setting id="tv_show_directory" type="folder" label="30401" default="" enable="!eq(-1,false)"/>
+	</category>
+	<category label="AutoUpdater">
+		<setting id="auto_update" type="bool" label="30600" default="false"/>
+		<setting id="update_tvshows" type="bool" label="30601" default="false" enable="!eq(-1,false)"/>
+		<!--<setting id="update_tvshow_mirrors" type="bool" label="30602" default="false" enable="!eq(-1,false)"/> -->
+		<setting id="update_tvshows_timer" type="enum" values="4h|8h|12h|24h" label="30607" default="1" enable="!eq(-1,false)"/>
+		<setting id="update_tvshow_cache" type="bool" label="30603" default="false" enable="!eq(-4,false)"/>
+		<setting id="update_tvshowcache_timer" type="enum" values="1d|2d|5d|1w" label="30607" default="0" enable="!eq(-1,false)"/>
+		<setting id="update_movie_cache" type="bool" label="30604" default="false" enable="!eq(-6,false)"/>
+		<setting id="update_moviecache_timer" type="enum" values="1d|2d|5d|1w" label="30607" default="0" enable="!eq(-1,false)"/>
+		<setting id="update_library" type="bool" label="30605" default="false" enable="!eq(-8,false)"/>
+		<setting id="update_artwork" type="bool" label="30606" default="false" enable="!eq(-9,false)"/>
+		<setting id="auto_backup" type="bool" label="30608" default="false"/>
+		<setting id="backup_timer" type="enum" values="1d|2d|5d|1w" label="30609" default="0" enable="!eq(-1,false)"/>
+	</category>
+	<category label="Misc">
+		<setting id="enable-default-views" type="bool" label="Enable Default Views" default="false"/>
+		<setting id="default-tvshow-view" type="number" label="    TV Shows" default="503"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="default-movie-view" type="number" label="    Movies" default="503"  visible="!eq(-2,false)" enable="!eq(-2,false)"/>
+		<setting id="highlight-colors" type="bool" label="Change Default Highlight Colors" default="false"/>
+		<setting id="hightlight-filesize" type="enum" values="Blue|Green|Red|Yellow|White" label="    File Size" default="0" enable="!eq(-1,false)"/>
+		<setting id="hightlight-enabled" type="enum" values="Blue|Green|Red|Yellow|White" label="    Enabled Item" default="4" enable="!eq(-2,false)"/>
+		<setting id="hightlight-disabled" type="enum" values="Blue|Green|Red|Yellow|White" label="    Disabled Item" default="2" enable="!eq(-3,false)"/>
+	</category>
+</settings>

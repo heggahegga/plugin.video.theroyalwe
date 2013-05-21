@@ -1,0 +1,121 @@
+<faq>
+	<heading id="0" title="What is The Royal We?">
+		The Royal We is a content aggrigator and VideoLibrary itegrator. While it does actually stream TV and Movies, it's main task is to automate importing content into the VideoLibrary so that it can be searched, viewed and played with all of the metadata and artwork provided by the native services. It was written with several principles in mind:
+	1. Moving all of the scraping and link harvesting into the background
+	2. Multi-site support - currently icefilms, 1channel, wareztuga, vidics, furk with more to come.
+	3. Data integrety - Caching will fail whenever a URL request timesout. This is ok. TRW will try to pick up where it left off.
+	4. Backend/Frontend independence.
+	5. There are lots of content out there to help you find what you want to watch, TRW uses external lists to search it's local content.
+	</heading>
+	<heading id="1" title="What is Donnie?">
+	Donnie is the backend service. It is the link between the individual sites and the TRW. It accesses the local database and indexes all of the content.
+	</heading>
+	<heading id="2" title="How does it work?">
+		TRW currently caches all its content in a seperate database. It supports SQLite for single seat configuration as well as MySQL for multiple viewers. There are several functions that can be scheduled and run by the Automater Service or on demand from XBMC. Depending upon which Service Providers (ie icefilms) are enabled in the settings, TRW will cache tv shows and movies from the appropriate sites as available shows. They can then be subscribed to from the context menu or watched directly from the menu. Once subscribed, the shows are marked for update. 
+
+	Subscriptions can be updated automatically or on demand. TRW then creates STRM files in folders designated in the settings for each episode/movie in the subscriptions. The VidoeLibrary scanner can then scan the STRM files to the library as well as download any available artwork. Each subscription has an enabled flag to remove that subscription from the list of updating subscriptions inorder to reduce potential indexing time. This is useful during the off season or for discontinued shows. When STRM files are launched, TRW pulls mirrors from the available service providers and joins them into a single list of mirrors to choose from. New are the autorank and autoplay features. This allows you to customize the priority of the mirror list. If autoplay is enabled, TRW will try the highest priority mirror automatically.
+
+	The "Watch" feature allows direct streaming from TRW. With IMDB and Trakt.tv integration, finding new content is much easier. The Watchlist as well as popular lists from IMDB and Trakt are accessible by TRW. Through Trakt's API, finding and saving popular lists can be done from either the individual sites or TRW.
+	</heading>
+	<heading id="3" title="Setup Instructions">
+		1. Install Addon and Update Service and Donnie.
+
+		2. Set TRW and Donnie settings. See Settings for Details. Ensure TV and Movies directory paths suit your setup before updating your subscriptions.
+
+		3. Cache available TV Shows/Movies. This takes some a while, this is a good time for a snack.
+
+		4. Pick/Subscribe to TV Shows/Movies. This will create STRM for movies and add TV Series to the subscription list.
+ 
+		5. Update TV Show Subscriptions. This will download the STRM files, but will not directly import them into the VideoLibrary.
+ 
+		6. Add Movie/TV Show folders to your video sources. They are created by default in TRW data folder unless specified in the settings.
+
+		7. Assign scrappers to the appropriate folders.
+
+		8. Update your VideoLibrary.
+
+		9. Set up AutoUpdater as you like. See Settings for Details.
+
+		10. Find and watch new movies and shows before you add them to your library.
+	</heading>
+	<heading id="4" title="TRW Settings">
+		-- General --
+		1. Enable siltent updates - runs user initated updates in the background. One job can be run at a time. The status page will give times of pervious jobs as well as the current job status. T
+		2. Enable autoplay - Enables election of the most commonly selected source. TRW will try the most commonly selected source amoung the available sources. If failed or the winner is not available, a list will be presented. The election process is skipped if the same show/movie is played multiple times in a row.
+		3. Enable autoranking. This will sort sources by service provider priority. This list of priorities is adjusted through the providers menu.
+		4. Prefer HD Links. This will assign a higher priority to HD links when possible.
+		5. Enable MetaData. This will enable resolution of metadata and artwork during the browsing screens when possible. Be advised - this takes some time and can slow down things significantly.
+		6. Enable mirror cachine. The first time a STRM file is played TRW scrapes the links from the available sources and caches them to the database. If played within the expiration limit, the links are drawn from the database.
+		7. Database Settings. Direct link to Donnie's Settings.
+		-- Support --
+		1. Loggin Level. Normal suppress most output to the log. Debugging is simply more verbose.
+		-- Providers --
+		This is a list of available web-sites TRW pulls content. At least one provider must be enabled. This setting filters the search results for TV Show/Movie results as well as caching, subscription updates and STRM viewing. Wareztuga requires an account before it will work at all. See the accounts tab. Disabling provider filtering bypasses the database lookup. If you want all links all the time regardless of whether they work, disable it.
+
+		-- Directories --
+		Overide the default TV Show and Movie directory. By default addon_data/id/tvshows|movies. These must be mounted directories. NFS and SMB are support through named mounts only.
+
+		-- AutoUpdater --
+		This controlls the seperate TRW AutoUpdater Service. This must be enabled seperately through the addons section of XBMC.
+		1. Enable. will toggle the installation of the various timers below.
+		2. Get new episode from subscribed TV Shows. This runs at the interval selected on the interval from 00:00. The service caches the last run time. It will schedule the next run depending on the selected interval or immediately if already expired at the time of initiation. 
+		3. Cache mirrors. This does not currently work, though will toggle pre-caching of mirrors with subscription updates.
+		4. Get new TV shows. This will automatically update the list of available shows. This is an incremental process, but defaults to a full update after a 5 day period.
+		5. Get new Movies. The same. Also an incremental process, though takes significanly longer. 
+		6. Autoupdate VideoLibrary. This will run the VideoLibrary Scanner on the TV Show folder immediately after subscriptions are updated if enabled.
+		7. Download Artwork. If the artwork downloader is installed an configured. This will run silently after the VideoLibrary is updated if enabled.
+	</heading>
+	<heading id="5" title="Donnie Settings">
+		-- TRW Database --
+		TRW supports SQLite or MySQL. Currently The SQLite option will create a database in TRW addon_data folder. MySQL will create tables starting with rw in the database specified. It will not create the a new database currently. One must exist with proper permissions.
+
+		-- VideoLibrary Database --
+		In order to autoflag as wathced, TRW needs access to the main videolibrary. There is only one update statement that is run when STRM's are played that updates the files.playCount=1 for the STRM file.
+
+		-- Accounts --
+		TRW will support multiple premium accounts through this heading. Not all are currently enabled. IMDB and Trakt.tv account info is also stored here.
+	</heading>	
+	<heading id="6" title="Using The Royal We">
+		Many of the functions such as subscribing to shows or Adding/Deleting movies/shows from watchlists are now in the context menus. [B]Browsing through Trakt trending or watchlist etc will bring up a list of Movies or shows. This does not mean that TRW has access to that content through it's cached content. Selecting an item with then search the local database. If found, it can be viewed or added to the VideoLibrary.[/B]
+		After initial setup as described in [B]Setup Instructions[/B] and [B]Settings[/B], search/browse for shows and movies through the menus. TRW will itegrate them into the VideoLibrary as the become available. When playing a STRM file, choose a mirror. If it doesn't work or is too slow, pick another. The providers menu allow temporary filtering of mirrors that seem problematic. There is a pre-written smartlist called Recently Aired that will filter the TV show library by air date giving the simulation of a PVR recently recorded experience. This way there's no need to search for shows that were aired last night etc.
+
+		There are subtle differences in how each site names TV shows (Title: Subtitle vs Title-Subtitle). This does not bode well for maintaining a single index of multiple sites. This Problem is handled differently for TV shows and Movies as follows:
+		TV Shows - There is function to merge subscriptions in the Suscriptions list. Subscribe to both shows, then merge the one into the other. This copies the urls from A to B then deletes A from the list of subscribed shows. Then when TRW updates an episode or season it will use a single episodeid to reference the miss-matched titles and present all the links.
+		Movies - This is less complicated. Currently when you import a movie TRW resolves the IMDB id from each site it can and then uses that as a unique identifer during the provider resolution process. This does cause a problem as noted in the know issues.
+	</heading>
+	<heading id="7" title="To Do">
+		A list possible additions:
+
+		1. Add more service providers.
+		
+		2. [B]COMPLETED:[/B] Add subscription merge function to eliminate duplicate/mismatched titles.
+
+		4. Add TV Show/Movie Title manager to modify titles to avoid library errors
+
+		5. Add trickle function to slowly cache mirrors. Partially complete, a command queuing system is functional though is currently not utilized.
+
+		6. Verify url_resolvers 
+		
+		7. [B]COMPLETED:[/B] Autoflag as watched.
+	
+		8. [B]WORKING:[/B] Track.tv support
+
+		9. [B]WORKING:[/B] Genre/Category filters
+		
+		10. Webinterface - Currently exists. Can add new shows/movies manage subscriptions all from a browser. Will plan to move to XBMC's web interface. Maude
+	</heading>
+	<heading id="8" title="Credits">
+		Special Thanks to:
+		
+		--XBMC Team
+		--XBMCHUB.COM
+		--Batch
+		--Eldorado
+		--Anarchintosh
+		--Anyone else who contributed.
+	</heading>
+	<heading id="9" title="Support Questions">
+		For further questions and support see the forum at http://xbmchub.com/forums/forum.php.
+		Feel free to register and leave a note, plus check out all the other great work by the team.
+	</heading>
+</faq>
