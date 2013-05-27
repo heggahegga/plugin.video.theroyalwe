@@ -393,7 +393,7 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 	log("Getting links by Service")
 
 	DB.connect()
-	DB.execute("DELETE FROM rw_stream_list")
+	DB.execute("DELETE FROM rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')])
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	SCR.getStreams(episodeid=episodeid, movieid=movieid)
 
@@ -462,7 +462,7 @@ def WatchStream(name, action, ignore_prefered = False):
 	_name = name
 	log("Gettings Streams: %s, %s" % (name, action))
 	DB.connect()
-	DB.execute("DELETE FROM rw_stream_list")
+	DB.execute("DELETE FROM rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')])
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	total = len(SCR.activeScrapers)
 
@@ -525,7 +525,7 @@ def ShowStreamSelect(SCR, service_streams, auto=False):
 		return False
 	stream = options[stream_select]
 	STREAM_SELECTION = streams[stream_select]
-	print "Selection is: %s" % STREAM_SELECTION
+	#print "Selection is: %s" % STREAM_SELECTION
 	resolved_url = SCR.resolveStream(stream)
 	return resolved_url
 
@@ -535,7 +535,7 @@ def WatchEpisode(name, action, ignore_prefered = False):
 		ignore_prefered = True
 	_name = name
 	DB.connect()
-	DB.execute("DELETE FROM rw_stream_list")
+	DB.execute("DELETE FROM rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')])
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	SCR.getStreamsByService(action)
 
@@ -1866,8 +1866,12 @@ def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder
 	if contextMenuItems:
 		CONTEXT_MENU = contextMenuItems + DEFAULT_CONTEXT
 	else:
-		CONTEXT_MENU = DEFAULT_CONTEXT     
-	li.addContextMenuItems(CONTEXT_MENU, replaceItems=False)
+		CONTEXT_MENU = DEFAULT_CONTEXT 
+	if reg.getBoolSetting('fullcontextmenu'):
+		replaceItems = False
+	else:
+		replaceItems = True
+	li.addContextMenuItems(CONTEXT_MENU, replaceItems=replaceItems)
 	url = sys.argv[0]+'?mode=' + str(mode) + '&name='+  name + '&action='+  action
 	return xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=isFolder, totalItems=0)
 
