@@ -191,12 +191,23 @@ def ExecuteUpgrade():
 def sys_exit():
 	exit = xbmc.executebuiltin("XBMC.ActivateWindow(Home)")
 	return exit
-def Notify(title, message):
-	xbmc.executebuiltin("XBMC.Notification("+title+","+message+")")
+def Notify(title, message, image=''):
+	if image == '':
+		image = xbmcpath(rootpath, 'icon.png')
+	xbmc.executebuiltin("XBMC.Notification("+title+","+message+", 1000, "+image+")")
 
 def xbmcpath(path,filename):
      translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
      return translatedpath
+
+def showQuote():
+	filepath = xbmcpath(rootpath+'/resources/', 'quotes.txt')
+	print filepath
+	f = open(filepath)
+	lines = f.readlines(100)
+	n= random.randint(0, len(lines)-1)
+	quote = lines[n]
+	Notify('', quote)
 
 
 def htmldecode(body):
@@ -1940,8 +1951,6 @@ try:
 except:
 		pass		
 log('==========================PARAMS:\ACTION: %s\nNAME: %s\nMODE: %s\nEPISODEID: %s\nMOVIEID: %s\nMYHANDLE: %s\nPARAMS: %s' % ( action, name, mode, episodeid, movieid, sys.argv[1], params ), level=0)
-
-
 
 
 if mode==None: #Main menu
