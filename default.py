@@ -156,7 +156,7 @@ def checkUpgradeStatus():
 		if dialog.yesno(msg, msg2, msg3):
 			BackupDatabase()
 		
-		if not dialog.yesno('Ready to proceed?', "It's not too late to cancle."): 
+		if not dialog.yesno('Ready to proceed?', "It's not too late to cancel."): 
 			sys_exit()
 			return
 		ExecuteUpgrade()
@@ -202,7 +202,6 @@ def xbmcpath(path,filename):
 
 def showQuote():
 	filepath = xbmcpath(rootpath+'/resources/', 'quotes.txt')
-	print filepath
 	f = open(filepath)
 	lines = f.readlines(100)
 	n= random.randint(0, len(lines)-1)
@@ -321,7 +320,7 @@ def DoSearch(msg):
 			return False
 
 
-def SetupLibrary(type):
+def SetupLibrary():
 	log("Trying to add Library source paths...")
 	source_path = os.path.join(xbmc.translatePath('special://profile/'), 'sources.xml')
 	
@@ -342,31 +341,29 @@ def SetupLibrary(type):
 		
 	video = soup.find("video")
 
-	if type=="Movies":
-		CreateDirectory(MOVIES_PATH)
-		if len(soup.findAll(text="Movies (The Royal We)")) < 1:
-			movie_source_tag = Tag(soup, "source")
-			movie_name_tag = Tag(soup, "name")
-			movie_name_tag.insert(0, "Movies (The Royal We)")
-			MOVIES_PATH_tag = Tag(soup, "path")
-			MOVIES_PATH_tag['pathversion'] = 1
-			MOVIES_PATH_tag.insert(0, MOVIES_PATH)
-			movie_source_tag.insert(0, movie_name_tag)
-			movie_source_tag.insert(1, MOVIES_PATH_tag)
-			video.insert(2, movie_source_tag)
+	CreateDirectory(MOVIES_PATH)
+	if len(soup.findAll(text="Movies (The Royal We)")) < 1:
+		movie_source_tag = Tag(soup, "source")
+		movie_name_tag = Tag(soup, "name")
+		movie_name_tag.insert(0, "Movies (The Royal We)")
+		MOVIES_PATH_tag = Tag(soup, "path")
+		MOVIES_PATH_tag['pathversion'] = 1
+		MOVIES_PATH_tag.insert(0, MOVIES_PATH)
+		movie_source_tag.insert(0, movie_name_tag)
+		movie_source_tag.insert(1, MOVIES_PATH_tag)
+		video.insert(2, movie_source_tag)
 
-	if type=="TV shows":
-		CreateDirectory(TV_SHOWS_PATH)
-		if len(soup.findAll(text="TV Shows (The Royal We)")) < 1:	
-			tvshow_source_tag = Tag(soup, "source")
-			tvshow_name_tag = Tag(soup, "name")
-			tvshow_name_tag.insert(0, "TV Shows (The Royal We)")
-			tvshow_path_tag = Tag(soup, "path")
-			tvshow_path_tag['pathversion'] = 1
-			tvshow_path_tag.insert(0, TV_SHOWS_PATH)
-			tvshow_source_tag.insert(0, tvshow_name_tag)
-			tvshow_source_tag.insert(1, tvshow_path_tag)
-			video.insert(2, tvshow_source_tag)
+	CreateDirectory(TV_SHOWS_PATH)
+	if len(soup.findAll(text="TV Shows (The Royal We)")) < 1:	
+		tvshow_source_tag = Tag(soup, "source")
+		tvshow_name_tag = Tag(soup, "name")
+		tvshow_name_tag.insert(0, "TV Shows (The Royal We)")
+		tvshow_path_tag = Tag(soup, "path")
+		tvshow_path_tag['pathversion'] = 1
+		tvshow_path_tag.insert(0, TV_SHOWS_PATH)
+		tvshow_source_tag.insert(0, tvshow_name_tag)
+		tvshow_source_tag.insert(1, tvshow_path_tag)
+		video.insert(2, tvshow_source_tag)
 	pDialog = xbmcgui.DialogProgress()
 	log(soup.prettify())
 	string = ""
@@ -409,9 +406,9 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 	SCR.getStreams(episodeid=episodeid, movieid=movieid)
 
 	if reg.getBoolSetting('enable-autorank'):
-		service_streams = DB.query("SELECT stream, url from rw_stream_list ORDER BY priority ASC", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
 	else:
-		service_streams = DB.query("SELECT stream, url from rw_stream_list", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 	if len(service_streams) == 0:
 		Notify('Streaming Error!', 'Could not find any viable links')
 		return False
@@ -420,7 +417,7 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 		for attempt in range(1,4):
 			log('Trying prefered host attempt: %s', attempt)
 			try:
-				row =  DB.query("SELECT url from rw_stream_list ORDER BY priority ASC LIMIT %s,1" % attempt)
+				row =  DB.query("SELECT url from rw_stream_list WHERE machineid=? ORDER BY priority ASC LIMIT ?,1",[attempt,reg.getSetting('machine-id')])
 				host = row[0]
 				resolved_url = SCR.resolveStream(host)
 				break
@@ -487,9 +484,9 @@ def WatchStream(name, action, ignore_prefered = False):
 		SCR.getStreams(episodeid=name)
 
 	if reg.getBoolSetting('enable-autorank'):
-		service_streams = DB.query("SELECT stream, url from rw_stream_list ORDER BY priority ASC", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
 	else:
-		service_streams = DB.query("SELECT stream, url from rw_stream_list", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
 	if len(service_streams) == 0:
 		Notify('Streaming Error!', 'Could not find any viable links')
@@ -499,7 +496,7 @@ def WatchStream(name, action, ignore_prefered = False):
 		for attempt in range(1,4):
 			log('Trying prefered host attempt: %s', attempt)
 			try:
-				row =  DB.query("SELECT url from rw_stream_list ORDER BY priority ASC LIMIT %s,1" % attempt)
+				row =  DB.query("SELECT url from rw_stream_list WHERE machineid=? ORDER BY priority ASC LIMIT ?,1",[attempt,reg.getSetting('machine-id')])
 				host = row[0]
 				resolved_url = SCR.resolveStream(host)
 				break
@@ -551,15 +548,15 @@ def WatchEpisode(name, action, ignore_prefered = False):
 	SCR.getStreamsByService(action)
 
 	if reg.getBoolSetting('enable-autorank'):
-		service_streams = DB.query("SELECT stream, url from rw_stream_list ORDER BY priority ASC", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
 	else:
-		service_streams = DB.query("SELECT stream, url from rw_stream_list", force_double_array=True)
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
 	if not ignore_prefered and reg.getBoolSetting('enable-autoplay') and reg.getBoolSetting('enable-autorank'):
 		for attempt in range(1,4):
 			log('Trying prefered host attempt: %s', attempt)
 			try:
-				row =  DB.query("SELECT url from rw_stream_list ORDER BY priority ASC LIMIT %s,1" % attempt)
+				row =  DB.query("SELECT url from rw_stream_list WHERE machineid=? ORDER BY priority ASC LIMIT ?,1",[attempt,reg.getSetting('machine-id')])
 				host = row[0]
 				resolved_url = SCR.resolveStream(host)
 				break
@@ -2233,8 +2230,7 @@ elif mode==4500:
 	ClearDatabaseLock()
 elif mode==4600:
 	log('Update Sources.xml')
-	SetupLibrary('Movies')
-	SetupLibrary('TV Shows')
+	SetupLibrary()
 
 
 
