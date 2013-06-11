@@ -645,8 +645,15 @@ def WatchStreamSource(name,url, idFile=None):
 		Notify("Streaming failed", "Streaming failed")
 		return False
 
-
-
+def playYouTube(vid):
+	url = 'plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vid
+	list_item = xbmcgui.ListItem(vid, iconImage="DefaultVideoBig.png", thumbnailImage='', path=str(url))
+	list_item.setProperty( "IsPlayable", "true" )
+	#list_item.setInfo('video', infoLabels=infoLabels)
+	playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+	playlist.clear()
+	playlist.add(url, list_item)
+	xbmc.Player().play(playlist)
 ###########################
 ### Subscriptions	###
 ###########################
@@ -1787,6 +1794,7 @@ def SupportMenu():
 	AddOption('FAQ',True, 3200, iconImage=art+'/faq.jpg')
 	AddOption('View XMBC.log',False, 3300, iconImage=art+'/log.jpg')
 	AddOption('Submit log to xbmclogs',False, 3400, iconImage=art+'/submitlog.jpg')
+	AddOption('Watch a demo',False, 3500, iconImage=art+'/watch.jpg')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def FAQMenu():
@@ -2195,6 +2203,10 @@ elif mode==3300:
 elif mode==3400:
 	log('Submit Log')
 	SubmitLog()
+elif mode==3500:
+	log('Watch Demo')
+	playYouTube('q7-nkCk5q3s')		
+
 
 elif mode==4000:
 	log('Settings Menu')
