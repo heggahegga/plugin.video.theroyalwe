@@ -13,6 +13,8 @@
 	<string id="30109">Enable Furk</string>
 	<string id="30110">Enable Alluc</string>
 	<string id="30111">Enable TubePlus</string>
+	<string id="30112">Enable WatchSeries</string>
+	<string id="30113">Enable SimplyMovies</string>
 	<!-- Accounts -->
 	<string id="30200">Hide successful login nofifications</string>
 	<string id="30201">    Username</string>

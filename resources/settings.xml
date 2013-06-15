@@ -19,18 +19,30 @@
 		<setting id="enable-provder-filtering" type="bool" label="Enable provider filtering" default="true"/>		
 		<setting id="enable-icefilms" type="bool" label="30100" default="true"/>
 		<setting id="icefilms-base-url" type="text" label="30101" default="icefilms.info" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="enable-1channel" type="bool" label="30102" default="true"/>
-		<setting id="1channel-base-url" type="text" label="30101" default="1channel.ch" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="enable-alluc" type="bool" label="30110" default="true"/>
+		<setting id="enable-1channel" type="bool" label="30102" default="false"/>
+		<setting id="1channel-base-url" type="text" label="30101" default="primewire.ag" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="enable-alluc" type="bool" label="30110" default="false"/>
 		<setting id="alluc-base-url" type="text" label="30101" default="alluc.org" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="enable-tubeplus" type="bool" label="30111" default="true"/>
+		
+		<setting id="enable-tubeplus" type="bool" label="30111" default="false"/>
 		<setting id="tubeplus-base-url" type="text" label="30101" default="tubeplus.me" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+
+		<setting id="enable-simplymovies" type="bool" label="30113" default="false"/>
+		<setting id="simplymovies-base-url" type="text" label="30101" default="simplymovies.net" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+
+		<setting id="enable-watchseries" type="bool" label="30112" default="false"/>
+		<setting id="watchseries-base-url" type="text" label="30101" default="watchseries.lt" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-wareztuga" type="bool" label="30106" default="false"/>
 		<setting id="wareztuga-base-url" type="text" label="30101" default="wareztuga.me" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="enable-vidics" type="bool" label="30108" default="true"/>
+		
+		<setting id="enable-vidics" type="bool" label="30108" default="false"/>
 		<setting id="vidics-base-url" type="text" label="30101" default="vidics.ch" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+
 		<setting id="enable-furk" type="bool" label="30109" default="false"/>
 		<setting id="furk-base-url" type="text" label="30101" default="furk.net" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+
+		
+
 	</category>
 	<category label="Directories">
 		<setting id="movie_subfolders" type="bool" label="Create Movie Subfolders" default="true"/>

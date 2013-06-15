@@ -97,6 +97,7 @@ VDB = Connector.GetVDBConnector()
 
 
 def BackupDatabase():
+	createUpdate = False
 	from datetime import datetime
 	path = os.path.join(xbmc.translatePath(DATA_PATH + 'backup'), '')
 	CreateDirectory(path)
@@ -113,7 +114,7 @@ def BackupDatabase():
 	pDialog = xbmcgui.DialogProgress()
 	pDialog.create('Creating Backup File')
 	DB.connect()
-	if DB.createBackupFile(backupfile, ts, pDialog):
+	if DB.createBackupFile(backupfile, ts, pDialog, createUpdate=createUpdate):
 		Notify('Backup Complete!', backupfile+'.bkf')
 	pDialog.close()
 
@@ -135,12 +136,98 @@ def RestoreDatabase():
 	pDialog = xbmcgui.DialogProgress()
 	pDialog.create('Restoring From Backup File')
 	if DB.restoreBackupFile(backupfile, pDialog):
-		Notify('Restore Complete!', '')
+		showQuote('Restore Complete!')
+	pDialog.close()
+
+def RestoreRemoteDatabase():
+	import hashlib
+	DB.connect()
+	dialog = xbmcgui.Dialog()
+	path = os.path.join(xbmc.translatePath(DATA_PATH + 'backup'), '')
+	CreateDirectory(path)
+	msg = 'Remote Database Update!'
+	msg2 = "************* WARNING *************"
+	msg3 = "This is dangerous, do you want to continue?"
+	if not dialog.yesno(msg, msg2, msg3): return
+	tempfile = xbmcpath(path, 'update.bkf')
+	md5file = xbmcpath(path, 'update.bkf.md5')
+	Download('http://dudehere-repository.googlecode.com/files/theroyalwe.update.bkf', tempfile)
+	Download('http://dudehere-repository.googlecode.com/files/theroyalwe.update.bkf.md5', md5file)
+	testsum = readfile(md5file)
+	checksum = hashlib.md5(open(tempfile).read()).hexdigest()
+	if not re.search('^'+checksum+' ', testsum):
+		Notify('Download Error!', 'The checksums do not match')
+		return
+	msg = 'Remote Database Restore!'
+	msg2 = "************* WARNING *************"
+	msg3 = "Last chance, do you really want to continue?"
+	if not dialog.yesno(msg, msg2, msg3): return
+	
+	pDialog = xbmcgui.DialogProgress()
+	pDialog.create('Updating From Backup File')
+	if DB.restoreBackupFile(tempfile, pDialog, update=True):
+		showQuote('Update Complete!')
 	pDialog.close()
 
 ###########################
 ### General functions 	###
 ###########################
+
+class StopDownloading(Exception): 
+        def __init__(self, value): 
+            self.value = value 
+        def __str__(self): 
+            return repr(self.value)
+          
+def Download(url, dest, displayname=False):
+        import time 
+        if displayname == False:
+            displayname=url
+        delete_incomplete = True
+        dp = xbmcgui.DialogProgress()
+        dp.create('Downloading', '', displayname)
+        start_time = time.time() 
+        try: 
+            urllib.urlretrieve(url, dest, lambda nb, bs, fs: _pbhook(nb, bs, fs, dp, start_time)) 
+        except:
+            if delete_incomplete:
+                while os.path.exists(dest): 
+                    try: 
+                        os.remove(dest) 
+                        break 
+                    except: 
+                        pass 
+            if sys.exc_info()[0] in (urllib.ContentTooShortError, StopDownloading, OSError): 
+                return False 
+            else: 
+                raise 
+            return False
+        return True
+
+         
+
+def _pbhook(numblocks, blocksize, filesize, dp, start_time):
+        try: 
+            percent = min(numblocks * blocksize * 100 / filesize, 100) 
+            currently_downloaded = float(numblocks) * blocksize / (1024 * 1024) 
+            kbps_speed = numblocks * blocksize / (time.time() - start_time) 
+            if kbps_speed > 0: 
+                eta = (filesize - numblocks * blocksize) / kbps_speed 
+            else: 
+                eta = 0 
+            kbps_speed = kbps_speed / 1024 
+            total = float(filesize) / (1024 * 1024) 
+            mbs = '%.02f MB of %.02f MB' % (currently_downloaded, total) 
+            e = 'Speed: %.02f Kb/s ' % kbps_speed 
+            e += 'ETA: %02d:%02d' % divmod(eta, 60) 
+            dp.update(percent, mbs, e)
+        except: 
+            percent = 100 
+            dp.update(percent) 
+        if dp.iscanceled(): 
+            dp.close() 
+            raise StopDownloading('Stopped Downloading')
+
 
 def checkUpgradeStatus():
 	log('Verifying Upgrade Status')
@@ -200,13 +287,14 @@ def xbmcpath(path,filename):
      translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
      return translatedpath
 
-def showQuote():
+def showQuote(msg=''):
 	filepath = xbmcpath(rootpath+'/resources/', 'quotes.txt')
 	f = open(filepath)
 	lines = f.readlines(100)
 	n= random.randint(0, len(lines)-1)
 	quote = lines[n]
-	Notify('', quote)
+	dialog = xbmcgui.Dialog()
+	dialog.ok(msg, quote)
 
 
 def htmldecode(body):
@@ -1772,6 +1860,7 @@ def ManageMenu():
 	AddOption('Movies',True, 2200, iconImage=art+'/movies.jpg')
 	AddOption('Backup Database',False, 2300, iconImage=art+'/backup.jpg')
 	AddOption('Restore Database',False, 2400, iconImage=art+'/restore.jpg')
+	AddOption('Download Remote Update',False, 2410, iconImage=art+'/restore.jpg')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ManageTVMenu():
@@ -2180,6 +2269,10 @@ elif mode==2300:
 elif mode==2400:
 	log('Restore Database')
 	RestoreDatabase()
+
+elif mode==2410:
+	log('Restore Remote Database')
+	RestoreRemoteDatabase()
 
 elif mode==2500:
 	log('Import Movie %s', name)
