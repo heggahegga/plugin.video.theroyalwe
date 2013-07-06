@@ -38,13 +38,10 @@
 	<!-- Directories -->
 	<string id="30300">Use custom directory</string>
 	<string id="30301">    Movie directory</string>	
-	<string id="30302">Use filters</string>
-	<string id="30303">    Released later than</string>
-	<string id="30304">    HD-only</string>
 	<string id="30400">Use custom directory</string>
 	<string id="30401">    TV show directory</string>	
-	<string id="30402">Use filters</string>
-	<string id="30403">    Released later than</string>
+	<string id="30402">    Download directory</string>
+
 	<!-- Automatic Update -->
 	<string id="30600">Enable Automatic Updates</string>
 	<string id="30601">    Get new episodes from subscribed TV shows</string>

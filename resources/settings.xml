@@ -8,9 +8,9 @@
 		<setting id="mirror-cache-limit" type="number" label="    Cached mirrors expire in (Hours)" default="1"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-metadata" type="bool" label="Enable MetaData" default="false"/>
 		<setting id="upgrade-status" type="number" visible="false" default="0"/>
+		<setting id="download-status" type="number" visible="false" default="0"/>
 		<setting id="machine-id" type="string" visible="false" default=""/>
 		<setting id="last-path" type="string" visible="false" default="0"/>
-		<setting id="database-settings" label="Database Settings" type="action" action="RunScript($CWD/resources/lib/donnie_settings.py, '')"/>
 	</category>
 	<category label="Support">
 		<setting id="logging-level" type="enum" values="Normal|Debugging" label="Logging Level" default="0"/>
@@ -50,6 +50,8 @@
 		<setting id="movie_directory" type="folder" label="30301" default="" enable="!eq(-1,false)"/>
 		<setting id="tv_show_custom_directory" type="bool" label="30400" default="false"/>
 		<setting id="tv_show_directory" type="folder" label="30401" default="" enable="!eq(-1,false)"/>
+		<setting id="download_custom_directory" type="bool" label="30400" default="false"/>
+		<setting id="download_directory" type="folder" label="30402" default="" enable="!eq(-1,false)"/>
 	</category>
 	<category label="AutoUpdater">
 		<setting id="auto_update" type="bool" label="30600" default="false"/>

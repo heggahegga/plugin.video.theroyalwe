@@ -68,6 +68,11 @@ if reg.getBoolSetting('tv_show_custom_directory'):
 else:
 	TV_SHOWS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'tvshows'), '')
 
+if reg.getBoolSetting('donwload_custom_directory'):
+	DOWNLOADS_PATH = reg.getSetting('download_directory')
+else:
+	DOWNLOADS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'downloads'), '')
+
 USE_META = reg.getBoolSetting('enable-metadata')
 
 
@@ -207,6 +212,7 @@ def Download(url, dest, displayname=False):
          
 
 def _pbhook(numblocks, blocksize, filesize, dp, start_time):
+	import time
         try: 
             percent = min(numblocks * blocksize * 100 / filesize, 100) 
             currently_downloaded = float(numblocks) * blocksize / (1024 * 1024) 
@@ -474,6 +480,64 @@ def WaitIf():
 	if xbmc.Player().isPlayingVideo() == True:
 		xbmc.Player().stop()
 
+
+def QueueMediaItem(name, media):
+	log("Queue %s for download: %s", (media, name))
+	CreateDirectory(DOWNLOADS_PATH)
+	DB.connect()
+	DB.execute("DELETE FROM rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')])
+	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+
+	if media=='movie':	
+		rows = DB.query("SELECT movieid FROM rw_movies WHERE movie=?", [name], force_double_array=True)
+		for row in rows:
+			index = rows.index(row)
+			imdb = SCR.resolveIMDB(movieid=row[0])
+		SCR.getStreams(movieid=imdb)
+	
+	if reg.getBoolSetting('enable-autorank'):
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
+	else:
+		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
+
+	log("Asking for a mirror")
+	resolved_url = ShowStreamSelect(SCR, service_streams)
+	dw_path = os.path.join(xbmc.translatePath(DOWNLOADS_PATH + name), '')
+	CreateDirectory(dw_path)
+
+	file_path = xbmcpath(dw_path, 'dl.avi')
+	DB.execute("INSERT INTO rw_download_queue(name, url, path) VALUES(?,?,?)", [name, resolved_url, file_path])
+	DB.commit()
+	Notify('Added to Queue', name)
+	#Download(resolved_url, file_path, displayname=name)
+
+
+def pollDownloadQueue():
+	if reg.getSetting('download-status') != '0':
+		print "Processing: %s" %  reg.getSetting('download-status')
+		return
+	DB.connect()
+	row = DB.query('SELECT * from rw_download_queue WHERE status=0 LIMIT 1')
+	if row:
+		log('Downloading: %s', row[1])
+		ADDON.setSetting('download-status', str(row[0]))
+		try:
+			urllib.urlretrieve(row[2], row[3], lambda nb, bs, fs: _qpbhook(nb, bs, fs))
+			DB.execute('UPDATE rw_download_queue SET status=1 WHERE did=?', reg.getSetting('download-status'))
+			ADDON.setSetting('download-status', '0')
+		except:
+			while os.path.exists(dest): 
+                    		try: 
+                        		os.remove(dest)
+                        		break 
+                    		except: pass
+			
+
+def _qpbhook(numblocks, blocksize, filesize):
+	percent = min(numblocks * blocksize * 100 / filesize, 100) 
+	currently_downloaded = float(numblocks) * blocksize / (1024 * 1024) 
+	total = float(filesize) / (1024 * 1024) 
+
 ###########################
 ### Streaming		###
 ###########################
@@ -568,6 +632,8 @@ def WatchStream(name, action, ignore_prefered = False):
 			index = rows.index(row)
 			imdb = SCR.resolveIMDB(movieid=row[0])
 		SCR.getStreams(movieid=imdb)
+	elif action=='episode':
+		SCR.getStreams(tempid=name)
 	else:
 		SCR.getStreams(episodeid=name)
 
@@ -1367,6 +1433,9 @@ def GetEpisodeList(showid):
 		SQL = "SELECT episodeid, name, LPAD(season, 2, 0) as season, LPAD(episode, 2, 0) as episode FROM rw_episodes WHERE showid=? ORDER BY season, episode ASC"
 	else:
 		SQL = "SELECT episodeid, name, substr('00' || season, -2, 2) AS season, substr('00' || episode, -2, 2) AS episode FROM rw_episodes WHERE showid=? ORDER BY season, episode ASC" 
+
+	DB.execute("DELETE FROM rw_temp_episodes WHERE machineid=?", [reg.getSetting('machine-id')])
+	DB.commit()
 	
 	rows = DB.query(SQL, [showid], force_double_array=True) 
 	for row in rows:
@@ -1376,8 +1445,13 @@ def GetEpisodeList(showid):
 		else:
 			name = row[1]
 		name = "%sx%s - %s" % (row[2], row[3], name)
-		AddOption(name, True, 50, str(row[0]), action='tvshow', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
-
+		DB.execute("INSERT INTO rw_temp_episodes(showname, title, season, episode, provider, url, machineid) VALUES(?,?,?,?,?,?,?)", [tvshowtitle, name, row[2], row[3], row[2]+row[3], row[0], reg.getSetting('machine-id')])
+		#AddOption(name, True, 50, str(row[0]), action='tvshow', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
+	DB.commit()
+	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')])
+	for row in rows:
+		commands = []
+		AddOption(row[0], True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1411,7 +1485,9 @@ def WatchMovieResults(name, action):
 		try:
 			commands = []
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2500, urllib.quote_plus(row[0]), '')
-			commands.append(('Add Moive to Library', cmd, ''))    		
+			commands.append(('Add Moive to Library', cmd, '')) 
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[0]), 'movie')
+			commands.append(('Add Download Moive Queue', cmd, ''))    		
 			AddOption(str(row[0]), False, 50, str(row[0]), action='movie', contextMenuItems=commands)
 		except:
 			pass
@@ -1560,11 +1636,17 @@ def WatchMovieTraktResults(name, url=None):
 	setView('default-movie-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def WatchTVNewReleases():
+def WatchTVNewReleases(provider=None):
+	if not provider:
+		providers = ['icefilms', '1channel', 'tubeplus']
+		for provider in providers:
+			AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
+		xbmcplugin.endOfDirectory(int(sys.argv[1]))
+		return
 	DB.connect()
 	META = metahandlers.MetaData()
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
-	episodes = SCR.getNewEpisodes()
+	episodes = SCR.getNewEpisodes(provider=provider)
 	for episode in episodes:
 		try:
 			if USE_META:
@@ -1769,10 +1851,11 @@ def AddonMenu():  #homescreen
 def WatchMenu():
 	AddOption('TV Shows',True, 1100, iconImage=art+'/tvshows.jpg')
 	AddOption('Movies',True, 1200, iconImage=art+'/movies.jpg')
+	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVMenu():
-	AddOption('Newest Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
+	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
 	AddOption('Subscriptions',True, 1170, iconImage=art+'/watchsubscriptions.jpg')
 	AddOption('Browse A-Z',True, 1110, iconImage=art+'/a-z.jpg')
 	AddOption('Browse Genres',True, 1120, iconImage=art+'/browsegenres.jpg')
@@ -2043,8 +2126,9 @@ except:
 try:
 		action=urllib.unquote_plus(params["action"])
 except:
-		pass		
-log('==========================PARAMS:\ACTION: %s\nNAME: %s\nMODE: %s\nEPISODEID: %s\nMOVIEID: %s\nMYHANDLE: %s\nPARAMS: %s' % ( action, name, mode, episodeid, movieid, sys.argv[1], params ), level=0)
+		pass
+if action != 'quiet':		
+	log('==========================PARAMS:\nACTION: %s\nNAME: %s\nMODE: %s\nEPISODEID: %s\nMOVIEID: %s\nMYHANDLE: %s\nPARAMS: %s' % ( action, name, mode, episodeid, movieid, sys.argv[1], params ), level=0)
 
 
 if mode==None: #Main menu
@@ -2085,6 +2169,15 @@ elif mode==140:
 elif mode==150:
 	log('Process Queue Item')
 	ProcessQueue()
+
+elif mode==200:
+	log('Queue Download Item')
+	QueueMediaItem(name, action)
+
+elif mode==250:
+	log('Poll Download Queue')
+	pollDownloadQueue()
+
 
 ##################### TV ######################################
 
@@ -2137,7 +2230,7 @@ elif mode==1159:
 
 elif mode==1160:
 	log('Watch New TV Episodes')
-	WatchTVNewReleases()
+	WatchTVNewReleases(name)
 
 elif mode==1170:
 	log('Watch Subscriptions')
