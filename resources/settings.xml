@@ -50,8 +50,6 @@
 		<setting id="movie_directory" type="folder" label="30301" default="" enable="!eq(-1,false)"/>
 		<setting id="tv_show_custom_directory" type="bool" label="30400" default="false"/>
 		<setting id="tv_show_directory" type="folder" label="30401" default="" enable="!eq(-1,false)"/>
-		<setting id="download_custom_directory" type="bool" label="30400" default="false"/>
-		<setting id="download_directory" type="folder" label="30402" default="" enable="!eq(-1,false)"/>
 	</category>
 	<category label="AutoUpdater">
 		<setting id="auto_update" type="bool" label="30600" default="false"/>

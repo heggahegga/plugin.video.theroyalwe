@@ -6,6 +6,8 @@
 ### Imports		 ###
 ############################	
 
+
+
 import urllib2, urllib, sys, os, re, random, copy, shutil
 import xbmc,xbmcplugin,xbmcgui,xbmcaddon
 import HTMLParser
@@ -28,7 +30,8 @@ art = rootpath+'/resources/artwork'
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from donnie import scrapers
 
-
+import routines
+from routines import *
 
 ############################
 ### Enviornment		 ###
@@ -53,7 +56,7 @@ def str2bool(v):
 	return v.lower() in ("yes", "true", "t", "1")
 
 from donnie.settings import Settings
-reg = Settings(['plugin.video.theroyalwe', 'script.module.donnie'])
+reg = Settings(['plugin.video.theroyalwe', 'script.module.donnie','script.module.walter'])
 
 
 LOGGING_LEVEL = reg.getSetting('logging-level')
@@ -329,7 +332,7 @@ def ClearDatabaseLock():
 		DB.commit()
 
 
-class TextBox:
+'''class TextBox:
 	# constants
 	WINDOW = 10147
 	CONTROL_LABEL = 1
@@ -356,7 +359,7 @@ class TextBox:
 		# set controls
 
 		self.message = heading, text
-		self.setControls()
+		self.setControls()'''
 
 
 
@@ -381,7 +384,7 @@ def CreateDirectory(dir_path):
 	if not os.path.exists(dir_path):
 		os.makedirs(dir_path)
 			
-def readfile(path, soup=False):
+'''def readfile(path, soup=False):
 	try:
 		file = open(path, 'r')
 		content=file.read()
@@ -401,7 +404,7 @@ def writefile(path, content):
 		file.close()
 		return True
 	except:
-		return False
+		return False'''
 
 def DoSearch(msg):
 	kb = xbmc.Keyboard('', msg, False)
@@ -480,58 +483,97 @@ def WaitIf():
 	if xbmc.Player().isPlayingVideo() == True:
 		xbmc.Player().stop()
 
+def ExecuteQueueCommand(name, action, command):
+	print name
+	print action
+	print command
+	from walter.streaming import QueueClass
+	if command == 'clear failed':
 
-def QueueMediaItem(name, media):
-	log("Queue %s for download: %s", (media, name))
-	CreateDirectory(DOWNLOADS_PATH)
+		ok = QueueClass().clearFailed()
+		msg = "Failed items removed from the queue"
+		if ok: 
+			Notify('Success', msg)
+			xbmc.executebuiltin("Container.Refresh")
+	
+	elif command == 'clear completed':
+
+		ok = QueueClass().clearCompleted()
+		msg = "Completed items removed from the queue"
+		if ok: 
+			Notify('Success', msg)
+			xbmc.executebuiltin("Container.Refresh")
+
+	elif command == 'cancel':
+		dialog = xbmcgui.Dialog()
+		if not dialog.yesno("Cancel Caching", "Do you cancel?", action):
+			return
+		ok = QueueClass().Cancel(name)
+		msg = "Completed items removed from the queue"
+		if ok: 
+			Notify('Success', msg)
+			xbmc.executebuiltin("Container.Refresh")		
+		
+
+def QueueCacheSeries(showid, name):
+	GetEpisodeList(showid, quiet=True)
+	DB.connect()
+	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')])
+	for row in rows:
+		#print row
+		QueueCache('tvshow', row[3], name)
+
+def QueueCache(media, name, href, folder=''):
+	print media	
+	print name
+	print href
 	DB.connect()
 	DB.execute("DELETE FROM rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')])
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+	if media=='tvshow':
+		done = False
+		for index in range(0, len(SCR.activeScrapers)):
+			scraper = SCR.activeScrapers[index]
+			if re.search('^'+scraper+'\:\/\/', href):
+				SCR.getStreamsByService(href)
+				done = True
+				break
+		if not done:
+			SCR.getStreams(tempid=name)
+			row = DB.query("SELECT showname, title FROM rw_temp_episodes WHERE machineid=? AND provider=? LIMIT 1", [reg.getSetting('machine-id'), name], force_double_array=False)
+			folder = CleanFileName(row[0])
+			name = "%s - %s" % (folder, row[1])
 
-	if media=='movie':	
+
+	elif media=='movie':
 		rows = DB.query("SELECT movieid FROM rw_movies WHERE movie=?", [name], force_double_array=True)
 		for row in rows:
 			index = rows.index(row)
 			imdb = SCR.resolveIMDB(movieid=row[0])
 		SCR.getStreams(movieid=imdb)
-	
+
+		
+
 	if reg.getBoolSetting('enable-autorank'):
 		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
 	else:
 		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
-	log("Asking for a mirror")
+
 	resolved_url = ShowStreamSelect(SCR, service_streams)
-	dw_path = os.path.join(xbmc.translatePath(DOWNLOADS_PATH + name), '')
-	CreateDirectory(dw_path)
 
-	file_path = xbmcpath(dw_path, 'dl.avi')
-	DB.execute("INSERT INTO rw_download_queue(name, url, path) VALUES(?,?,?)", [name, resolved_url, file_path])
-	DB.commit()
-	Notify('Added to Queue', name)
-	#Download(resolved_url, file_path, displayname=name)
+	if not resolved_url:
+		msg = "Failed adding to queue: unable to resolve url"
+		Notify('Failed', msg)
+		return False
+
+	from walter.streaming import QueueClass
+	ok = QueueClass().queue(name, resolved_url, src=href, media=media, folder=folder)
+	msg = "Added to queue: %s" % name
+	if ok: Notify('Success', msg)
 
 
-def pollDownloadQueue():
-	if reg.getSetting('download-status') != '0':
-		print "Processing: %s" %  reg.getSetting('download-status')
-		return
-	DB.connect()
-	row = DB.query('SELECT * from rw_download_queue WHERE status=0 LIMIT 1')
-	if row:
-		log('Downloading: %s', row[1])
-		ADDON.setSetting('download-status', str(row[0]))
-		try:
-			urllib.urlretrieve(row[2], row[3], lambda nb, bs, fs: _qpbhook(nb, bs, fs))
-			DB.execute('UPDATE rw_download_queue SET status=1 WHERE did=?', reg.getSetting('download-status'))
-			ADDON.setSetting('download-status', '0')
-		except:
-			while os.path.exists(dest): 
-                    		try: 
-                        		os.remove(dest)
-                        		break 
-                    		except: pass
-			
+		
 
 def _qpbhook(numblocks, blocksize, filesize):
 	percent = min(numblocks * blocksize * 100 / filesize, 100) 
@@ -634,6 +676,8 @@ def WatchStream(name, action, ignore_prefered = False):
 		SCR.getStreams(movieid=imdb)
 	elif action=='episode':
 		SCR.getStreams(tempid=name)
+		row = DB.query("SELECT title FROM rw_temp_episodes WHERE machineid=? AND provider=? LIMIT 1", [reg.getSetting('machine-id'), name], force_double_array=False)
+		name = row[0]
 	else:
 		SCR.getStreams(episodeid=name)
 
@@ -725,17 +769,17 @@ def WatchEpisode(name, action, ignore_prefered = False):
 		log("Asking for a mirror")
 		resolved_url = ShowStreamSelect(SCR, service_streams)
 	setLastPath(_name)
-	try:	
-		log("Attempting to stream: %s", resolved_url)
-		WatchStreamSource(name,resolved_url)
-	except:
-		log("Failed launching stream: %s", resolved_url, level=0)
-		Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
+	#try:	
+	log("Attempting to stream: %s", resolved_url)
+	WatchStreamSource(name,resolved_url)
+	#except:
+	#	log("Failed launching stream: %s", resolved_url, level=0)
+	#	Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
 
 
 def StreamSource(name,url, media=None, idFile=None):
 	log('Attempting to stream url: %s' % str(url))	
-	WaitIf()
+	#WaitIf()
 	try:
 		meta = VDB.getMetaData(media, idFile)
 		log(meta)
@@ -755,17 +799,16 @@ def StreamSource(name,url, media=None, idFile=None):
 		runtime = ''
 	infoLabels = {
 		'Title': name,
-		'Genre': 'stream: ' + STREAM_SELECTION,
+		'Genre': STREAM_SELECTION,
 		'plotoutline': STREAM_SELECTION, 
-		'plot': STREAM_SELECTION
+		'plot': STREAM_SELECTION,
+		'icon': icon,
+		'thumb': thumb
 	}
-	list_item = xbmcgui.ListItem(title, iconImage=icon, thumbnailImage=thumb, path=str(url))
-	list_item.setProperty( "IsPlayable", "true" )
-	list_item.setInfo('video', infoLabels=infoLabels)
-	list_item.setThumbnailImage(thumb)
 
 	try:
-		xbmcplugin.setResolvedUrl(int(sys.argv[ 1 ]),True,list_item)
+		from walter.streaming import StreamClass
+		S = StreamClass(url, title, info=infoLabels, hashstring=title).play(strm=True)
 		return True
 	except:
 		log('Streaming failed to launch, no response from servier')
@@ -774,30 +817,27 @@ def StreamSource(name,url, media=None, idFile=None):
 
 def WatchStreamSource(name,url, idFile=None):
 	global STREAM_SELECTION
-	log('Attempting to stream url: %s' % str(url))	
+	log('Attempting to stream url: %s' % str(name))	
 	thumb = ''
-	WaitIf()
+	icon = ''
+	#WaitIf()
 	infoLabels = {
 		'Title': name,
-		'Genre': 'stream: ' + STREAM_SELECTION,
+		'Genre': STREAM_SELECTION,
 		'plotoutline': STREAM_SELECTION, 
-		'plot': STREAM_SELECTION
+		'plot': STREAM_SELECTION,
+		'icon': icon,
+		'thumb': thumb
 	}
-	list_item = xbmcgui.ListItem(name, iconImage="DefaultVideoBig.png", thumbnailImage=thumb, path=str(url))
-	list_item.setProperty( "IsPlayable", "true" )
-	list_item.setInfo('video', infoLabels=infoLabels)
-	try:
-		
-		playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-		playlist.clear()
-		playlist.add(url, list_item)
-		
-		xbmc.Player().play(playlist)
-		return True
-	except:
-		log('Streaming failed to launch, no response from servier')
-		Notify("Streaming failed", "Streaming failed")
-		return False
+
+	#try:
+	from walter.streaming import StreamClass
+	S = StreamClass(url, name, info=infoLabels, hashstring=name).play(strm=False)
+	return True
+	#except:
+	#	log('Streaming failed to launch, no response from server')
+	#	Notify("Streaming failed", "Streaming failed")
+	#	return False
 
 def playYouTube(vid):
 	url = 'plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vid
@@ -808,6 +848,7 @@ def playYouTube(vid):
 	playlist.clear()
 	playlist.add(url, list_item)
 	xbmc.Player().play(playlist)
+
 ###########################
 ### Subscriptions	###
 ###########################
@@ -982,6 +1023,28 @@ def UpdateAvailableMovies(silent=False):
 	DB.commit()
 	if _silent:
 		Notify('Download Complete!', 'Movies updated.')
+
+
+def UpdateProviderByName(service, commands='all'):
+	silent = False
+	DB.connect()
+	row = DB.query("SELECT updating FROM rw_status")
+	if checkUpdateStatus():
+		log("Donwload in progress.")
+		Notify('Please try again!', 'Donwload in progress, check status.')
+		return
+	updateJobStatus('Provider Update: ' + service)
+	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+	service = SCR.getScraperByName(name)
+	if commands == 'all' or commands == 'tv':
+		service._getShows(silent)
+	if commands == 'all' or commands == 'episodes':
+		service._updateSubscriptions(silent)
+	if commands == 'all' or commands == 'movies':
+		service._getMovies(silent)
+
+	DB.execute("UPDATE rw_status SET updating=0, job=''")
+	DB.commit()
 
 def checkUpdateStatus():
 	try:
@@ -1256,7 +1319,10 @@ def WatchTVResults(name, action):
 		try:
 			
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2115, urllib.quote_plus(str(row[1])), '')
-			commands.append(('Subscribe to show', cmd, ''))    		
+			commands.append(('Subscribe to show', cmd, ''))
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 220, urllib.quote_plus(str(row[1])), urllib.quote_plus(str(row[0])))
+			commands.append(('Cache Series', cmd, ''))
+    		
 			AddOption(row[0], True, 1190, str(row[1]), contextMenuItems=commands)
 		except:
 			commands = []
@@ -1410,7 +1476,7 @@ def WatchTVIMDBResults(name):
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
-def GetEpisodeList(showid):
+def GetEpisodeList(showid, quiet=False):
 	DB.connect()
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	META = metahandlers.MetaData()
@@ -1428,7 +1494,7 @@ def GetEpisodeList(showid):
 	else:
 		icon = ''
 		fanart = ''
-	
+
 	if DB_TYPE=='mysql':
 		SQL = "SELECT episodeid, name, LPAD(season, 2, 0) as season, LPAD(episode, 2, 0) as episode FROM rw_episodes WHERE showid=? ORDER BY season, episode ASC"
 	else:
@@ -1448,9 +1514,14 @@ def GetEpisodeList(showid):
 		DB.execute("INSERT INTO rw_temp_episodes(showname, title, season, episode, provider, url, machineid) VALUES(?,?,?,?,?,?,?)", [tvshowtitle, name, row[2], row[3], row[2]+row[3], row[0], reg.getSetting('machine-id')])
 		#AddOption(name, True, 50, str(row[0]), action='tvshow', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 	DB.commit()
+	if quiet:
+		return True
 	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')])
 	for row in rows:
 		commands = []
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[3]), urllib.quote_plus(row[0]))
+		commands.append(('Cache Episode', cmd, '')) 
+		
 		AddOption(row[0], True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -1486,8 +1557,10 @@ def WatchMovieResults(name, action):
 			commands = []
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2500, urllib.quote_plus(row[0]), '')
 			commands.append(('Add Moive to Library', cmd, '')) 
-			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[0]), 'movie')
-			commands.append(('Add Download Moive Queue', cmd, ''))    		
+			#cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[0]), 'movie')
+			#commands.append(('Add Download Moive Queue', cmd, ''))
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 210, urllib.quote_plus(row[0]), urllib.quote_plus(row[0]))
+			commands.append(('Cache Movie', cmd, ''))    		
 			AddOption(str(row[0]), False, 50, str(row[0]), action='movie', contextMenuItems=commands)
 		except:
 			pass
@@ -1647,7 +1720,9 @@ def WatchTVNewReleases(provider=None):
 	META = metahandlers.MetaData()
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	episodes = SCR.getNewEpisodes(provider=provider)
+	
 	for episode in episodes:
+		commands = []
 		try:
 			if USE_META:
 				temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
@@ -1673,10 +1748,11 @@ def WatchTVNewReleases(provider=None):
 				data = None
 				icon = ''
 				fanart = ''
-
 			link = "%s://%s" % (episode[0], episode[2])
-
-			AddOption(episode[1], True, 60, episode[1], link, iconImage=icon, fanart=fanart, meta=data)
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(episode[1]), urllib.quote_plus(link))
+			
+			commands.append(('Cache Episode', cmd, ''))
+			AddOption(episode[1], True, 60, episode[1], link, iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 		except Exception, e:
 			print e
 			icon = ''
@@ -1941,6 +2017,7 @@ def WatchMovieIMDBMenu():
 def ManageMenu():
 	AddOption('TV Shows',True, 2100, iconImage=art+'/tvshows.jpg')
 	AddOption('Movies',True, 2200, iconImage=art+'/movies.jpg')
+	AddOption('Walter Caching Service',True, 5000)
 	AddOption('Backup Database',False, 2300, iconImage=art+'/backup.jpg')
 	AddOption('Restore Database',False, 2400, iconImage=art+'/restore.jpg')
 	AddOption('Download Remote Update',False, 2410, iconImage=art+'/restore.jpg')
@@ -1962,6 +2039,7 @@ def ManageMovieMenu():
 
 
 def SupportMenu():
+	AddOption('View Welcome',False, 3600, iconImage=art+'/faq.jpg')
 	AddOption('View Status',False, 3100, iconImage=art+'/viewstatus.jpg')
 	AddOption('FAQ',True, 3200, iconImage=art+'/faq.jpg')
 	AddOption('View XMBC.log',False, 3300, iconImage=art+'/log.jpg')
@@ -1986,6 +2064,7 @@ def FAQMenu():
 def SettingsMenu():
 	AddOption('The Royal We Settings',False, 4100, iconImage=art+'/theroyalwesttings.jpg')
 	AddOption('Donnie Settings',False, 4200, iconImage=art+'/donniesettings.jpg')
+	AddOption('Walter Settings',False, 4700, iconImage=art+'/donniesettings.jpg')
 	AddOption('Service Providers',True, 4300, iconImage=art+'/serviceproviders.jpg')
 	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/urlresolversettings.jpg')
 	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/cleardatabaselock.jpg')
@@ -1997,8 +2076,17 @@ def ProviderMenu():
 	AddOption("Modify Priorites", True, 4310, iconImage=art+'/serviceproviders.jpg')
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	for index in range(0, len(SCR.activeScrapers)):
+		commands = []
 		service = SCR.getScraperByIndex(index).service
-		AddOption(SCR.getScraperByIndex(index).name, True, 4320, SCR.getScraperByIndex(index).service, iconImage=art+'/'+service+'.jpg')
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'all')			
+		commands.append(('Update Provider', cmd, ''))
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'tv')			
+		commands.append(('Update TV Shows', cmd, ''))
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'episodes')			
+		commands.append(('Update Episodes', cmd, ''))
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'movies')			
+		commands.append(('Update Movies', cmd, ''))
+		AddOption(SCR.getScraperByIndex(index).name, True, 4320, SCR.getScraperByIndex(index).service, iconImage=art+'/'+service+'.jpg', contextMenuItems=commands)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def AvailableProviders(name):
@@ -2023,7 +2111,161 @@ def ListProviders():
 		key = "%s:%s:%s - %s" % (row[3], row[2], row[0], row[1])
 		AddOption(name,False, 4330, key)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def WalterMenu():
+	AddOption('Walter Status', False, 5100)
+	AddOption('Walter Queue', True, 5200)
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def ViewWalterQueue():
+	from walter.streaming import QueueClass
+	queue = QueueClass().getQueue()
+	for item in queue:
+		commands = []
+		if item[1] == 'tvshow':
+			media = 'TV'
+		else:
+			media = 'MV'
+
+		if item[6] == 1:
+			name = "%s - [B][COLOR %s]%s[/COLOR][/B]" % (media,'green', item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5210, item[0], item[2])			
+			commands.append(('Cancle', cmd, ''))
+		elif item[6] == 3:
+			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'red', item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5260, item[0], '')			
+			commands.append(('Re-add to queue', cmd, ''))
+		elif item[6] == 2:
+			name = "%s - %s" % (media, item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5270, item[0], '')			
+			commands.append(('Remove from queue', cmd, ''))
+		else:
+			
+			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'yellow', item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5230, item[0], item[2])			
+			commands.append(('Remove from pending', cmd, ''))
+
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5280, '', '')			
+		commands.append(('Clear All Completed', cmd, ''))
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5290, '', '')			
+		commands.append(('Clear All Failed', cmd, ''))
+
+		AddOption(name,False, 5300, str(item[0]), contextMenuItems=commands)
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def CancelQueueItem(qid, name):
+	dialog = xbmcgui.Dialog()
+	if not dialog.yesno("Are you sure?", "Do you want to cancel caching?", name):
+		return
+	from walter.streaming import QueueClass
+	Q = QueueClass()
+	Q.Cancel(qid)
 	
+	xbmc.executebuiltin("Container.Refresh")
+
+def ShowCacheProgress():
+	pDialog = xbmcgui.DialogProgress()
+	pDialog.create('Caching Progress')
+	from walter.streaming import QueueClass
+	Q = QueueClass()
+	data = Q.getStatus()
+	name = data['name'] 
+	while True:
+		p = Q.getQuickStatus()
+		cached = p['cached']
+		total = p['total']
+		if total > 1000000000:
+			total = (float(total) / 1000000000)
+			total = "%.2f (%s)" % (total, 'GB')
+		elif total > 1000000:
+			total = (float(total) / 1000000)
+			total = "%.2f (%s)" % (total, 'MB')
+		else:
+			total = (float(total) / 1000)
+			total = "%.2f (%s)" % (total, 'KB')
+
+		if cached > 1000000000:
+			cached = (float(cached) / 1000000000)
+			cached = "%.2f (%s)" % (cached, 'GB')
+		elif cached > 1000000:
+			cached = (float(cached) / 1000000)
+			cached = "%.2f (%s)" % (cached, 'MB')
+		else:
+			cached = (float(cached) / 1000)
+			cached = "%.2f (%s)" % (cached, 'KB')
+		status = "%s of %s" % (cached, total) 
+		pDialog.update(p['percent'], name, status)
+		if (pDialog.iscanceled() or p['cached']==p['total']):
+			return
+		xbmc.sleep(1000)
+
+def ViewWalterStatus():
+	title = 	'Walter Status'
+	status = 	'[COLOR red]Disabled[/COLOR]'
+	threads = 	''
+	filename = 	''
+	cached = 	''
+	total = 	''
+	percent = 	''
+	length = 	''
+ 
+	if reg.getBoolSetting('enable-caching'):
+		from walter.streaming import QueueClass
+		data = QueueClass().getStatus() 
+		status = '[COLOR green]Enabled[/COLOR]'
+		try:
+			threads = data['threads']
+			filename = data['name']
+			cached = int(data['cached'])
+			total = int(data['total'])
+			percent = str((100 * cached / total)) + '%'
+			length = data['length']
+			if total > 1000000000:
+				total = (float(total) / 1000000000)
+				total = "%.2f (%s)" % (total, 'GB')
+			elif total > 1000000:
+				total = (float(total) / 1000000)
+				total = "%.2f (%s)" % (total, 'MB')
+			else:
+				total = (float(total) / 1000)
+				total = "%.2f (%s)" % (total, 'KB')
+
+			if cached > 1000000000:
+				cached = (float(cached) / 1000000000)
+				cached = "%.2f (%s)" % (cached, 'GB')
+			elif cached > 1000000:
+				cached = (float(cached) / 1000000)
+				cached = "%.2f (%s)" % (cached, 'MB')
+			else:
+				cached = (float(cached) / 1000)
+				cached = "%.2f (%s)" % (cached, 'KB')
+		except:
+			pass
+
+	text = '''
+	Service:	
+	------------------------------------------
+	[B]Walter[/B]:				%s
+	[B]Queue Length[/B]:			%s
+
+	------------------------------------------
+	[B]Description[/B]:			%s
+	[B]Active Threads[/B]:			%s
+	[B]Cached[/B]:				%s
+	[B]Total[/B]:				%s
+	[B]Progress[/B]:		       	%s
+	
+	''' % (
+		status,
+		length,
+		filename,
+		threads,
+		cached,
+		total,
+		percent
+	)
+	TB = TextBox()
+	TB.show(title, text)	
 ########################
 ### Params and stuff ###
 ########################
@@ -2033,23 +2275,27 @@ cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4100, '', '
 DEFAULT_CONTEXT.append(('The Royal We Settings', cmd, ''))
 cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4200, '', '')
 DEFAULT_CONTEXT.append(('Donnie Settings', cmd, ''))
+cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4700, '', '')
+DEFAULT_CONTEXT.append(('Walter Settings', cmd, ''))
 cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 3100, '', '')
 DEFAULT_CONTEXT.append(('View Donnie Status', cmd, '')) 
 cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4500, '', '')
 DEFAULT_CONTEXT.append(('Clear Database Lock', cmd, '')) 
 
-def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = []):
+def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = [], overlay=6):
 	global DEFAULT_CONTEXT
 	global rootpath
 	if fanart=='':
 		fanart=rootpath+'/fanart.jpg'
 	if meta:
+		meta['overlay'] = overlay
 		li = xbmcgui.ListItem(text, iconImage=iconImage)
 		li.setInfo(type="Video", infoLabels=meta)
 		li.setProperty( "Fanart_Image", fanart )
 	else:
+		meta={"Title": text, "overlay": int(overlay)}
 		li = xbmcgui.ListItem(text, iconImage=iconImage)
-		li.setInfo(type="Video", infoLabels={"Title": text})
+		li.setInfo(type="Video", infoLabels=meta)
 		li.setProperty( "Fanart_Image", fanart )
 	if contextMenuItems:
 		CONTEXT_MENU = contextMenuItems + DEFAULT_CONTEXT
@@ -2132,6 +2378,7 @@ if action != 'quiet':
 
 
 if mode==None: #Main menu
+
 	checkUpgradeStatus()
 	AddonMenu()
 elif mode==10:
@@ -2171,8 +2418,15 @@ elif mode==150:
 	ProcessQueue()
 
 elif mode==200:
-	log('Queue Download Item')
-	QueueMediaItem(name, action)
+	log('Queue TV Show')
+	QueueCache('tvshow', name, action)
+elif mode==210:
+	log('Queue Movie')
+	QueueCache('movie', name, action)
+
+elif mode==220:
+	log('Queue Series %s, %s', (name, action))
+	QueueCacheSeries(name, action)
 
 elif mode==250:
 	log('Poll Download Queue')
@@ -2391,7 +2645,10 @@ elif mode==3400:
 	SubmitLog()
 elif mode==3500:
 	log('Watch Demo')
-	playYouTube('q7-nkCk5q3s')		
+	playYouTube('q7-nkCk5q3s')	
+elif mode==3600:
+	log('Show Welcome')
+	showWelcome()		
 
 
 elif mode==4000:
@@ -2409,6 +2666,9 @@ elif mode==4300:
 elif mode==4310:
 	log('List Providers')
 	ListProviders()
+elif mode==4311:
+	log('Update provider by name')
+	UpdateProviderByName(name, action)
 elif mode==4320:
 	log('List Providers by: %s', name)
 	AvailableProviders(name)
@@ -2429,6 +2689,39 @@ elif mode==4500:
 elif mode==4600:
 	log('Update Sources.xml')
 	SetupLibrary()
+elif mode==4700:
+	log('Walter Settings')
+	xbmcaddon.Addon(id='script.module.walter').openSettings()
+
+elif mode==5000:
+	log('Walter Menu')
+	WalterMenu()
+elif mode==5100:
+	log('Walter Status')
+	ViewWalterStatus()
+elif mode==5200:
+	log('Walter Queue Menu')
+	ViewWalterQueue()
+elif mode==5210:
+	log('Cancel Queue Item')
+	ExecuteQueueCommand(name, action, 'cancel')
+elif mode==5260:
+	log('Retry Queue Item')
+	ExecuteQueueCommand(name, action, 'retry')
+elif mode==5230:
+	log('Remove Pending Queue Item')
+	ExecuteQueueCommand(name, action, 'remove pending')
+elif mode==5280:
+	log('Clear Completed from queue')
+	ExecuteQueueCommand(name, action, 'clear completed')
+elif mode==5290:
+	log('Clear Failed and Canceled from queue')
+	ExecuteQueueCommand(name, action, 'clear failed')
+
+
+elif mode==5300:
+	log('Walter Progress Bar')
+	ShowCacheProgress()
 
 
 
