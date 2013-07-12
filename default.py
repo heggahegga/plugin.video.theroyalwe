@@ -1322,7 +1322,10 @@ def WatchTVResults(name, action):
 			
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2115, urllib.quote_plus(str(row[1])), '')
 			commands.append(('Subscribe to show', cmd, ''))
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2113, urllib.quote_plus(str(row[1])), '')
+			commands.append(('Merge into existing subscription', cmd, ''))
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 220, urllib.quote_plus(str(row[1])), urllib.quote_plus(str(row[0])))
+			
 			commands.append(('Cache Series', cmd, ''))
     		
 			AddOption(row[0], True, 1190, str(row[1]), contextMenuItems=commands)
@@ -1714,7 +1717,7 @@ def WatchMovieTraktResults(name, url=None):
 def WatchTVNewReleases(provider=None):
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	if not provider:
-		providers = ['icefilms', '1channel', 'tubeplus']
+		providers = ['icefilms', '1channel', 'tubeplus', 'watchseries']
 		for provider in providers:
 			if reg.getBoolSetting('enable-' + provider):
 				AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
@@ -2597,7 +2600,6 @@ elif mode==2114:
 elif mode==2115:
 	log('Add TV Subscription')
 	SubscribeShow(name)
-
 
 elif mode==2130:
 	log('Update TV Subscriptions')
