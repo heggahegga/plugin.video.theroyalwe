@@ -18,7 +18,7 @@
 	<category label="Providers">
 		<setting id="enable-provder-filtering" type="bool" label="Enable provider filtering" default="true"/>		
 		<setting id="enable-icefilms" type="bool" label="30100" default="true"/>
-		<setting id="icefilms-base-url" type="text" label="30101" default="icefilms.info" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="icefilms-base-url" type="text" label="30101" default="www.icefilms.info" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-1channel" type="bool" label="30102" default="false"/>
 		<setting id="1channel-base-url" type="text" label="30101" default="primewire.ag" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-alluc" type="bool" label="30110" default="false"/>

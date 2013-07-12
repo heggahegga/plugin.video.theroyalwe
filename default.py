@@ -71,10 +71,10 @@ if reg.getBoolSetting('tv_show_custom_directory'):
 else:
 	TV_SHOWS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'tvshows'), '')
 
-if reg.getBoolSetting('donwload_custom_directory'):
+'''if reg.getBoolSetting('donwload_custom_directory'):
 	DOWNLOADS_PATH = reg.getSetting('download_directory')
 else:
-	DOWNLOADS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'downloads'), '')
+	DOWNLOADS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'downloads'), '')'''
 
 USE_META = reg.getBoolSetting('enable-metadata')
 
@@ -82,7 +82,7 @@ USE_META = reg.getBoolSetting('enable-metadata')
 
 MOVIES_DATA_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'movies_data'), '')
 TV_SHOWS_DATA_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'tvshows_data'), '')
-DOWNLOAD_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'download'), '')
+#DOWNLOAD_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'download'), '')
 RECENTLY_AIRED_PATH = os.path.join(xbmc.translatePath('special://profile'), 'playlists/video/RecentlyAired.xsp')
 EXCLUDE_PROBLEM_EPISODES = True
 AZ_DIRECTORIES = ['#1234', 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y', 'Z']
@@ -242,6 +242,7 @@ def checkUpgradeStatus():
 	log('Verifying Upgrade Status')
 	status = reg.getSetting('upgrade-status')
 	if status < VERSION:
+		
 		dialog = xbmcgui.Dialog()
 		dialog.ok('TRW Version Update!', 'Make sure the database settings are correct.')
 		xbmcaddon.Addon(id='script.module.donnie').openSettings()
@@ -256,6 +257,7 @@ def checkUpgradeStatus():
 			sys_exit()
 			return
 		ExecuteUpgrade()
+		showWelcome()
 
 def ExecuteUpgrade():
 	DB.connect()
@@ -648,7 +650,7 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 	try:	
 		StreamSource(name,resolved_url, media=media, idFile=idFile)
 	except:
-		Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
+		Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
 		log("Failed launching stream")
 		
 
@@ -715,7 +717,7 @@ def WatchStream(name, action, ignore_prefered = False):
 		WatchStreamSource(name,resolved_url)
 	except:
 		log("Failed launching stream: %s", resolved_url, level=0)
-		Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
+		Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
 
 
 def ShowStreamSelect(SCR, service_streams, auto=False):
@@ -1710,15 +1712,17 @@ def WatchMovieTraktResults(name, url=None):
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVNewReleases(provider=None):
+	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	if not provider:
 		providers = ['icefilms', '1channel', 'tubeplus']
 		for provider in providers:
-			AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
+			if reg.getBoolSetting('enable-' + provider):
+				AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
 		xbmcplugin.endOfDirectory(int(sys.argv[1]))
 		return
 	DB.connect()
 	META = metahandlers.MetaData()
-	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+	
 	episodes = SCR.getNewEpisodes(provider=provider)
 	
 	for episode in episodes:
