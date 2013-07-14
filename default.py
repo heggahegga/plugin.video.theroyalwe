@@ -285,6 +285,26 @@ def ExecuteUpgrade():
 	dialog.ok(msg, msg2, msg3)
 	ADDON.setSetting('upgrade-status', str(VERSION))
 	
+
+def ResetProviderPriorities():
+	dialog = xbmcgui.Dialog()
+	msg = "Please confirm"
+	msg2 = 'Continue with reset?'
+	msg3 = ""
+	if not dialog.yesno(msg, msg2, msg3):
+		return
+	DB.connect()
+	rows = DB.query("SELECT providerid FROM rw_providers ORDER BY provider, providerid ASC", force_double_array=True)
+	i=1		
+	for row in rows:
+		DB.execute("UPDATE rw_providers SET priority=? WHERE providerid=?", [i, row[0]])
+		i += 1
+	DB.commit()
+
+	msg = 'Reset Complete!'
+	msg2 = "For questions, support or feeback go to:"
+	msg3 = "[B]http://xbmchub.com/forum/[/B]"
+	dialog.ok(msg, msg2, msg3)
 	
 def sys_exit():
 	exit = xbmc.executebuiltin("XBMC.ActivateWindow(Home)")
@@ -885,7 +905,7 @@ def toggleSubscription(showid):
 	DB.commit()
 	xbmc.executebuiltin("Container.Refresh")
 
-def mergeSubscription(showid):
+def mergeSubscription(showid, refresh=True):
 	DB.connect()
 	dialog = xbmcgui.Dialog()
 	merge_from = showid
@@ -898,14 +918,20 @@ def mergeSubscription(showid):
 	option = dialog.select("Select a Subscription to merge into: ", options)
 	if option < 0:
 		return True
+	if not refresh:
+		SubscribeShow(showid, quiet=True)
 	merge_to = option_ids[option]
 	log("Merging " + str(showid) + " TO " + str(merge_to))
 	DB.execute("INSERT INTO rw_showlinks(showid, service, url) SELECT ?, src.service, src.url FROM rw_showlinks AS src WHERE src.showid=?", [merge_to, merge_from])
 	DB.execute("DELETE FROM rw_subscriptions WHERE showid=?", [merge_from])
 	DB.commit()
-	xbmc.executebuiltin("Container.Refresh")
+	if refresh:
+		xbmc.executebuiltin("Container.Refresh")
+	else:
+		Notify('Success!', 'Subscriptions merged.')
+		
 
-def SubscribeShow(name):
+def SubscribeShow(name, quiet=False):
 	showid = name
 	DB.connect()
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
@@ -916,7 +942,8 @@ def SubscribeShow(name):
 		row = DB.query("SELECT showname FROM rw_shows where showid=?", [showid])
 		name = str(row[0])
 		log("Subscribe to %s", name)
-		Notify("Subscription Added", name)
+		if not quiet:
+			Notify("Subscription Added", name)
 	except Exception, e:
 		Notify("Subscription Failed", 'ERROR: %s' % e)
 
@@ -1322,8 +1349,8 @@ def WatchTVResults(name, action):
 			
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2115, urllib.quote_plus(str(row[1])), '')
 			commands.append(('Subscribe to show', cmd, ''))
-			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2113, urllib.quote_plus(str(row[1])), '')
-			commands.append(('Merge into existing subscription', cmd, ''))
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2116, urllib.quote_plus(str(row[1])), '')
+			commands.append(('Merge with existing subscription', cmd, ''))
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 220, urllib.quote_plus(str(row[1])), urllib.quote_plus(str(row[0])))
 			
 			commands.append(('Cache Series', cmd, ''))
@@ -2081,6 +2108,7 @@ def SettingsMenu():
 def ProviderMenu():
 	log("Listing service providers")
 	AddOption("Modify Priorites", True, 4310, iconImage=art+'/serviceproviders.jpg')
+	AddOption("Reset Priorites", True, 4350, iconImage=art+'/serviceproviders.jpg')
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	for index in range(0, len(SCR.activeScrapers)):
 		commands = []
@@ -2600,6 +2628,9 @@ elif mode==2114:
 elif mode==2115:
 	log('Add TV Subscription')
 	SubscribeShow(name)
+elif mode==2116:
+	log('Merge with Exising Subscription')
+	mergeSubscription(name,refresh=False)
 
 elif mode==2130:
 	log('Update TV Subscriptions')
@@ -2684,6 +2715,9 @@ elif mode==4330:
 elif mode==4340:
 	log('Toggle Provider: %s', name)
 	ToggleProvider(name)
+elif mode==4350:
+	log('Reset provider priorities')
+	ResetProviderPriorities()
 elif mode==4400:
 	log('URLResolver Settings')
 	#import urlresolver
