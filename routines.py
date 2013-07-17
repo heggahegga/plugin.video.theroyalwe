@@ -67,12 +67,18 @@ def showWelcome():
 	text = readfile(path)
 	TextBox().show('Welcome new user!', text)
 
+def removeYear(s, regex='( \(\d{4}\))$'):
+	has_year = re.search(regex, s)
+	if has_year:
+		s = s[0:len(s)-7]
+	s = htmlcleaner.clean(s,strip=True)
+	s = s.strip()
+	return s
+	
+
 def CleanFileName(s, remove_year=True, use_encoding = False, use_blanks = True):
-		has_year = re.search('( \(\d{4}\))$', s)
-		if remove_year and has_year:
-			s = s[0:len(s)-7]
-		s = htmlcleaner.clean(s,strip=True)
-		s = s.strip()
+		if remove_year:
+			s=removeYear(s)
 		if use_encoding:
 			s = s.replace('"', '%22')
 			s = s.replace('*', '%2A')

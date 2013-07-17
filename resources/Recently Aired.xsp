@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<smartplaylist type="episodes">
+    <name>Recently Aired</name>
+    <match>all</match>
+    <rule field="airdate" operator="notinthelast">
+        <value>-1 day</value>
+    </rule>
+    <rule field="airdate" operator="inthelast">
+        <value>3 weeks</value>
+    </rule>
+    <order direction="descending">airdate</order>
+</smartplaylist>

@@ -498,6 +498,11 @@ def SetupLibrary():
 	dialog.ok("Source folders added", "To complete the setup:", " 1) Restart XBMC.", " 2) Set the content type of added folders.")	
 
 
+def InstallSmartList():
+	msg = 'SmartList Installed!'
+	msg2 = "For questions, support or feeback go to:"
+	msg3 = "[B]http://xbmchub.com/forum/[/B]"
+	dialog.ok(msg, msg2, msg3)
 
 
 def WaitIf():
@@ -730,7 +735,9 @@ def WatchStream(name, action, ignore_prefered = False):
 	else:
 		log("Asking for a mirror")
 		resolved_url = ShowStreamSelect(SCR, service_streams)
-
+		if resolved_url == -1:
+			log("Stream selection aborted")
+			return False
 	setLastPath(_name)
 	try:	
 		log("Attempting to stream: %s", resolved_url)
@@ -750,7 +757,7 @@ def ShowStreamSelect(SCR, service_streams, auto=False):
 		options.append(stream[1])
 	stream_select = dialog.select('Select mirror', streams)
 	if stream_select < 0:
-		return False
+		return -1
 	stream = options[stream_select]
 	STREAM_SELECTION = streams[stream_select]
 	#print "Selection is: %s" % STREAM_SELECTION
@@ -1508,15 +1515,20 @@ def WatchTVIMDBResults(name):
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
-def GetEpisodeList(showid, quiet=False):
+def GetEpisodeList(showid, quiet=False, season=None):
 	DB.connect()
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	META = metahandlers.MetaData()
-	SCR.getEpisodes(showid)
+	SCR.getEpisodes(showid, check_cache=True)
 	row = DB.query("SELECT showname, imdb FROM rw_shows WHERE showid=?", [showid])
-	tvshowtitle = row[0]
-	imdb_id = row[1]
-	if USE_META:
+	tvshowtitle = removeYear(row[0])
+	imdb_id = SCR.resolveIMDB(showid=showid)
+	print tvshowtitle
+	print imdb_id
+	icon = ''
+	fanart = ''
+	data = {}
+	'''if USE_META:
 		data = META.get_meta('tvshow', tvshowtitle, imdb_id=imdb_id)
 	else:
 		data = None
@@ -1525,17 +1537,33 @@ def GetEpisodeList(showid, quiet=False):
 		fanart = data['banner_url']
 	else:
 		icon = ''
-		fanart = ''
+		fanart = '''''
+
+	if not season:
+		rows = DB.query("SELECT season FROM rw_episodes WHERE showid=? GROUP BY season ORDER BY season ASC", [showid], force_double_array=True)
+		seasons = []
+		for row in rows:
+			seasons.append(int(row[0]))
+		images = META.get_seasons(tvshowtitle, imdb_id, seasons)
+		for season in seasons:
+			try:
+				icon = images[seasons.index(season)]['cover_url']
+				fanart =  images[seasons.index(season)]['backdrop_url']
+			except:
+				icon = ''
+				fanart = ''
+			AddOption("Season %s " % season, True, 1191, str(showid), action=str(season), iconImage=icon, fanart=fanart, meta=data)
+		xbmcplugin.endOfDirectory(int(sys.argv[1]))
+		return True
 
 	if DB_TYPE=='mysql':
-		SQL = "SELECT episodeid, name, LPAD(season, 2, 0) as season, LPAD(episode, 2, 0) as episode FROM rw_episodes WHERE showid=? ORDER BY season, episode ASC"
+		SQL = "SELECT episodeid, name, LPAD(season, 2, 0) as season, LPAD(episode, 2, 0) as episode FROM rw_episodes WHERE showid=? AND season=? ORDER BY season, episode ASC"
 	else:
-		SQL = "SELECT episodeid, name, substr('00' || season, -2, 2) AS season, substr('00' || episode, -2, 2) AS episode FROM rw_episodes WHERE showid=? ORDER BY season, episode ASC" 
+		SQL = "SELECT episodeid, name, substr('00' || season, -2, 2) AS season, substr('00' || episode, -2, 2) AS episode FROM rw_episodes WHERE showid=? AND season=? ORDER BY season, episode ASC" 
 
 	DB.execute("DELETE FROM rw_temp_episodes WHERE machineid=?", [reg.getSetting('machine-id')])
 	DB.commit()
-	
-	rows = DB.query(SQL, [showid], force_double_array=True) 
+	rows = DB.query(SQL, [showid, season], force_double_array=True) 
 	for row in rows:
 		commands = []
 		if re.match("^\d{1,2}x\d{1,2} ", row[1]):
@@ -1544,17 +1572,27 @@ def GetEpisodeList(showid, quiet=False):
 			name = row[1]
 		name = "%sx%s - %s" % (row[2], row[3], name)
 		DB.execute("INSERT INTO rw_temp_episodes(showname, title, season, episode, provider, url, machineid) VALUES(?,?,?,?,?,?,?)", [tvshowtitle, name, row[2], row[3], row[2]+row[3], row[0], reg.getSetting('machine-id')])
-		#AddOption(name, True, 50, str(row[0]), action='tvshow', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 	DB.commit()
 	if quiet:
 		return True
-	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')])
+	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')], force_double_array=True)
 	for row in rows:
+		if USE_META:
+			data = META.get_episode_meta(tvshowtitle, imdb_id, row[1], row[2])
+			icon = data['cover_url']
+			fanart =  data['backdrop_url']
+			if data['title']:
+			
+				show_text = '%sx%s %s' % (str(row[1]).zfill(2), str(row[2]).zfill(2), data['title'])
+			else:
+				show_text = row[0]
+		else:
+			show_text = row[0]	
 		commands = []
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[3]), urllib.quote_plus(row[0]))
 		commands.append(('Cache Episode', cmd, '')) 
 		
-		AddOption(row[0], True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
+		AddOption(show_text, True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1757,6 +1795,7 @@ def WatchTVNewReleases(provider=None):
 	
 	for episode in episodes:
 		commands = []
+		t = None
 		try:
 			if USE_META:
 				temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
@@ -1777,6 +1816,13 @@ def WatchTVNewReleases(provider=None):
 					data=META.get_episode_meta(t, tv_meta['imdb_id'], s, e)
 					fanart = data['backdrop_url']
 					icon = ''
+					if data['overlay'] == 6:
+						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'true')
+						commands.append(('Mark Watched', cmd, ''))
+					elif data['overlay'] == 7:
+						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'false')
+						commands.append(('Mark Unwatched', cmd, ''))
+					
 				t = None
 			else:
 				data = None
@@ -2103,6 +2149,7 @@ def SettingsMenu():
 	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/urlresolversettings.jpg')
 	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/cleardatabaselock.jpg')
 	AddOption('Install TRW to source.xml',False, 4600, iconImage=art+'/addtrwtosource.jpg')
+	AddOption('Install Recently Aired SmartList',False, 4800, iconImage=art+'/addtrwtosource.jpg')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ProviderMenu():
@@ -2317,21 +2364,34 @@ DEFAULT_CONTEXT.append(('View Donnie Status', cmd, ''))
 cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4500, '', '')
 DEFAULT_CONTEXT.append(('Clear Database Lock', cmd, '')) 
 
-def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = [], overlay=6):
+def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = [], overlay=7):
 	global DEFAULT_CONTEXT
 	global rootpath
 	if fanart=='':
 		fanart=rootpath+'/fanart.jpg'
-	if meta:
-		meta['overlay'] = overlay
-		li = xbmcgui.ListItem(text, iconImage=iconImage)
-		li.setInfo(type="Video", infoLabels=meta)
-		li.setProperty( "Fanart_Image", fanart )
+	'''if overlay==7:
+		overlay = 7
+		watched = True
 	else:
-		meta={"Title": text, "overlay": int(overlay)}
+		overlay = 6
+		watched = False'''
+	if meta:
+		#meta['overlay'] = int(overlay)
+		#meta['watched'] = watched
 		li = xbmcgui.ListItem(text, iconImage=iconImage)
 		li.setInfo(type="Video", infoLabels=meta)
+		#li.setInfo("video", infoLabels=meta)
 		li.setProperty( "Fanart_Image", fanart )
+		#li.setProperty('IsPlayable', True);
+	else:
+		meta={"Title": text}
+		li = xbmcgui.ListItem(text, iconImage=iconImage)
+		li.setInfo(type="Video", infoLabels=meta)
+		#li.setInfo("video", infoLabels=meta)
+		li.setProperty( "Fanart_Image", fanart )
+	#print meta
+	#li.setProperty('IsPlayable', 'true');
+	#li.setProperty('IsPlayable', 'true');	
 	if contextMenuItems:
 		CONTEXT_MENU = contextMenuItems + DEFAULT_CONTEXT
 	else:
@@ -2467,6 +2527,9 @@ elif mode==250:
 	log('Poll Download Queue')
 	pollDownloadQueue()
 
+elif mode == 300:
+	log('toggle watched status: %s, %s' % (name, action))
+
 
 ##################### TV ######################################
 
@@ -2526,8 +2589,11 @@ elif mode==1170:
 	WatchTVSubscriptions()
 
 elif mode==1190:
-	log('Get Episode List: %s', name)
+	log('Get Season List: %s', name)
 	GetEpisodeList(name)
+elif mode==1191:
+	log('Get Episode List: %s', name)
+	GetEpisodeList(name, season=action)
 
 ##################### MOVIE ###################################
 
@@ -2732,6 +2798,10 @@ elif mode==4600:
 elif mode==4700:
 	log('Walter Settings')
 	xbmcaddon.Addon(id='script.module.walter').openSettings()
+
+elif mode==4800:
+	log('Install Recently Aired')
+	InstallSmartList()
 
 elif mode==5000:
 	log('Walter Menu')
