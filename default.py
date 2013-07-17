@@ -29,7 +29,10 @@ art = rootpath+'/resources/artwork'
 #art = 'http://dudehere-repository.googlecode.com/git/artwork'
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 from donnie import scrapers
-
+try: 
+	import simplejson as json
+except ImportError: 
+	import json
 import routines
 from routines import *
 
@@ -685,7 +688,7 @@ def getLastPath():
 def setLastPath(path):
 	ADDON.setSetting('last-path', path)
 
-def WatchStream(name, action, ignore_prefered = False):
+def WatchStream(name, action, ignore_prefered = False, metadata = None):
 	if name == getLastPath():
 		ignore_prefered = True
 	_name = name
@@ -741,7 +744,7 @@ def WatchStream(name, action, ignore_prefered = False):
 	setLastPath(_name)
 	try:	
 		log("Attempting to stream: %s", resolved_url)
-		WatchStreamSource(name,resolved_url)
+		WatchStreamSource(name,resolved_url, metadata=metadata)
 	except:
 		log("Failed launching stream: %s", resolved_url, level=0)
 		Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
@@ -844,7 +847,7 @@ def StreamSource(name,url, media=None, idFile=None):
 		Notify("Streaming failed", "Streaming failed")
 		return False
 
-def WatchStreamSource(name,url, idFile=None):
+def WatchStreamSource(name,url, idFile=None, metadata=None):
 	global STREAM_SELECTION
 	log('Attempting to stream url: %s' % str(name))	
 	thumb = ''
@@ -858,10 +861,9 @@ def WatchStreamSource(name,url, idFile=None):
 		'icon': icon,
 		'thumb': thumb
 	}
-
 	#try:
 	from walter.streaming import StreamClass
-	S = StreamClass(url, name, info=infoLabels, hashstring=name).play(strm=False)
+	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
 	return True
 	#except:
 	#	log('Streaming failed to launch, no response from server')
@@ -877,6 +879,18 @@ def playYouTube(vid):
 	playlist.clear()
 	playlist.add(url, list_item)
 	xbmc.Player().play(playlist)
+
+def changeWatchStatus(media_type, action):
+
+	#j = json.dumps(str(action})
+	data = json.loads(action)
+	print data[0]
+	#print data['imdb_id']
+	#data = json.loads()
+	#print j['episode']
+	META = metahandlers.MetaData()
+	META.change_watched(media_type, data[0], data[1], season=data[2], episode=data[3], year='', watched=data[4])
+        xbmc.executebuiltin("XBMC.Container.Refresh")
 
 ###########################
 ### Subscriptions	###
@@ -1286,7 +1300,10 @@ def ViewStatus():
 	[B]WarezTuga - TV[/B]: 			%s
 	[B]WarezTuga - Movies[/B]: 		%s
 	[B]Vidics - TV[/B]: 			%s
-	[B]Vidics - Movies[/B]:			%s
+	[B]Vidics - Movies[/B]:			try: 
+	import simplejson as json
+except ImportError: 
+	import json%s
 	[B]TubePlus - TV[/B]: 			%s
 	[B]TubePlus - Movies[/B]:		%s
 	[B]Alluc - TV[/B]: 			%s
@@ -1523,22 +1540,7 @@ def GetEpisodeList(showid, quiet=False, season=None):
 	row = DB.query("SELECT showname, imdb FROM rw_shows WHERE showid=?", [showid])
 	tvshowtitle = removeYear(row[0])
 	imdb_id = SCR.resolveIMDB(showid=showid)
-	print tvshowtitle
-	print imdb_id
-	icon = ''
-	fanart = ''
 	data = {}
-	'''if USE_META:
-		data = META.get_meta('tvshow', tvshowtitle, imdb_id=imdb_id)
-	else:
-		data = None
-	if data:
-		icon = data['cover_url']
-		fanart = data['banner_url']
-	else:
-		icon = ''
-		fanart = '''''
-
 	if not season:
 		rows = DB.query("SELECT season FROM rw_episodes WHERE showid=? GROUP BY season ORDER BY season ASC", [showid], force_double_array=True)
 		seasons = []
@@ -1577,22 +1579,33 @@ def GetEpisodeList(showid, quiet=False, season=None):
 		return True
 	rows = DB.query("SELECT title, season, episode, provider FROM rw_temp_episodes WHERE machineid=? GROUP BY provider", [reg.getSetting('machine-id')], force_double_array=True)
 	for row in rows:
+		commands = []
 		if USE_META:
 			data = META.get_episode_meta(tvshowtitle, imdb_id, row[1], row[2])
 			icon = data['cover_url']
 			fanart =  data['backdrop_url']
 			if data['title']:
-			
 				show_text = '%sx%s %s' % (str(row[1]).zfill(2), str(row[2]).zfill(2), data['title'])
 			else:
 				show_text = row[0]
+			action =[tvshowtitle, str(imdb_id), str(row[1]), str(row[2])]
+			if data['overlay'] == 6:
+				action.append('7')
+				cmd = 'XBMC.RunPlugin(%s?mode=%s&action=%s)' % (sys.argv[0], 300, urllib.quote_plus(json.dumps(action)))
+				commands.append(('Mark Watched', cmd, '')) 
+			else:
+				action.append('6')
+				cmd = 'XBMC.RunPlugin(%s?mode=%s&action=%s)' % (sys.argv[0], 300, urllib.quote_plus(json.dumps(action)))
+				commands.append(('Mark Unwatched', cmd, '')) 
+
+	
 		else:
 			show_text = row[0]	
-		commands = []
+
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[3]), urllib.quote_plus(row[0]))
 		commands.append(('Cache Episode', cmd, '')) 
-		
-		AddOption(show_text, True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
+		metadata = {'video_type': 'episode', 'imdb_id': imdb_id, 'title': tvshowtitle, 'season': row[1], 'episode': row[2]}
+		AddOption(show_text, True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands, metadata=json.dumps(metadata))
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -2364,7 +2377,7 @@ DEFAULT_CONTEXT.append(('View Donnie Status', cmd, ''))
 cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4500, '', '')
 DEFAULT_CONTEXT.append(('Clear Database Lock', cmd, '')) 
 
-def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = [], overlay=7):
+def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder.png", fanart='', meta=None, contextMenuItems = [], overlay=7, metadata=None):
 	global DEFAULT_CONTEXT
 	global rootpath
 	if fanart=='':
@@ -2402,6 +2415,8 @@ def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder
 		replaceItems = True
 	li.addContextMenuItems(CONTEXT_MENU, replaceItems=replaceItems)
 	url = sys.argv[0]+'?mode=' + str(mode) + '&name='+  name + '&action='+  action
+	if metadata:
+		url += '&metadata='+  metadata
 	return xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=isFolder, totalItems=0)
 
 def setView(view):
@@ -2439,6 +2454,7 @@ action=None
 path=None
 episodeid=None
 movieid=None
+metadata=None
 
 try:
 		url=urllib.unquote_plus(params["url"])
@@ -2468,6 +2484,10 @@ try:
 		action=urllib.unquote_plus(params["action"])
 except:
 		pass
+try:
+		metadata=urllib.unquote_plus(params["metadata"])
+except:
+		pass
 if action != 'quiet':		
 	log('==========================PARAMS:\nACTION: %s\nNAME: %s\nMODE: %s\nEPISODEID: %s\nMOVIEID: %s\nMYHANDLE: %s\nPARAMS: %s' % ( action, name, mode, episodeid, movieid, sys.argv[1], params ), level=0)
 
@@ -2486,7 +2506,8 @@ elif mode==30:
 	ClearDatabaseLock()
 elif mode==50:
 	log('Watch Stream')
-	WatchStream(name, action)
+	
+	WatchStream(name, action, metadata=json.loads(metadata))
 elif mode==60:
 	log('Watch Episode')
 	WatchEpisode(name, action)
@@ -2528,7 +2549,8 @@ elif mode==250:
 	pollDownloadQueue()
 
 elif mode == 300:
-	log('toggle watched status: %s, %s' % (name, action))
+	log('toggle tvshow watched status: %s' % action)
+	changeWatchStatus('episode', action)
 
 
 ##################### TV ######################################
