@@ -703,6 +703,7 @@ def WatchStream(name, action, ignore_prefered = False, metadata = None):
 		for row in rows:
 			index = rows.index(row)
 			imdb = SCR.resolveIMDB(movieid=row[0])
+		metadata = {'title': name, 'imdb_id': imdb, 'media_type': 'movie', 'season': '', 'episode': ''}
 		SCR.getStreams(movieid=imdb)
 	elif action=='episode':
 		SCR.getStreams(tempid=name)
@@ -801,12 +802,12 @@ def WatchEpisode(name, action, ignore_prefered = False):
 		log("Asking for a mirror")
 		resolved_url = ShowStreamSelect(SCR, service_streams)
 	setLastPath(_name)
-	#try:	
-	log("Attempting to stream: %s", resolved_url)
-	WatchStreamSource(name,resolved_url)
-	#except:
-	#	log("Failed launching stream: %s", resolved_url, level=0)
-	#	Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
+	try:	
+		log("Attempting to stream: %s", resolved_url)
+		WatchStreamSource(name,resolved_url)
+	except:
+		log("Failed launching stream: %s", resolved_url, level=0)
+		Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
 
 
 def StreamSource(name,url, media=None, idFile=None):
@@ -1383,7 +1384,6 @@ def WatchTVResults(name, action):
 		except:
 			commands = []
 			pass
-
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1486,7 +1486,7 @@ def WatchTVTraktResults(name, url=None):
 				icon=show['images']['poster']
 				fanart=show['images']['fanart']			
 			AddOption("%s (%s)" % (show['title'], show['year']), True, 1159, show['title'], iconImage=icon, fanart=fanart, meta=data)
-	setView('default-tvshow-view')
+	setView('default-tvshow-view', 'tvshows')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1528,7 +1528,7 @@ def WatchTVIMDBResults(name):
 				
 			AddOption(title, True, 1159, show['title'], iconImage=icon, fanart=fanart, meta=data,contextMenuItems=commands)
 
-	setView('default-tvshow-view')
+	setView('default-tvshow-view', 'tvshows')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1547,6 +1547,7 @@ def GetEpisodeList(showid, quiet=False, season=None):
 		for row in rows:
 			seasons.append(int(row[0]))
 		images = META.get_seasons(tvshowtitle, imdb_id, seasons)
+		print images
 		for season in seasons:
 			try:
 				icon = images[seasons.index(season)]['cover_url']
@@ -1555,6 +1556,7 @@ def GetEpisodeList(showid, quiet=False, season=None):
 				icon = ''
 				fanart = ''
 			AddOption("Season %s " % season, True, 1191, str(showid), action=str(season), iconImage=icon, fanart=fanart, meta=data)
+		setView('default-season-view', 'tvshows')
 		xbmcplugin.endOfDirectory(int(sys.argv[1]))
 		return True
 
@@ -1606,6 +1608,7 @@ def GetEpisodeList(showid, quiet=False, season=None):
 		commands.append(('Cache Episode', cmd, '')) 
 		metadata = {'video_type': 'episode', 'imdb_id': imdb_id, 'title': tvshowtitle, 'season': row[1], 'episode': row[2]}
 		AddOption(show_text, True, 50, str(row[3]), action='episode', iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands, metadata=json.dumps(metadata))
+	setView('default-episode-view', 'tvshows')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1640,15 +1643,12 @@ def WatchMovieResults(name, action):
 			commands = []
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 2500, urllib.quote_plus(row[0]), '')
 			commands.append(('Add Moive to Library', cmd, '')) 
-			#cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(row[0]), 'movie')
-			#commands.append(('Add Download Moive Queue', cmd, ''))
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 210, urllib.quote_plus(row[0]), urllib.quote_plus(row[0]))
 			commands.append(('Cache Movie', cmd, ''))    		
 			AddOption(str(row[0]), False, 50, str(row[0]), action='movie', contextMenuItems=commands)
 		except:
 			pass
-	#if reg.getBoolSetting('enable-default-views'):
-	#	xbmc.executebuiltin("Container.SetViewMode("+reg.getSetting('default-movie-view')+")")
+	setView('default-movie-view', 'movies')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieTraktResults(name, url=None):
@@ -1789,7 +1789,7 @@ def WatchMovieTraktResults(name, url=None):
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 1241, movie['imdb_id'], '')				
 			commands.append(('Add to IMDB Watchlist', cmd, ''))
 			AddOption("%s (%s)" % (movie['title'], movie['year']), True, 1259, movie['title'], iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
-	setView('default-movie-view')
+	setView('default-movie-view', 'movies')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVNewReleases(provider=None):
@@ -1852,6 +1852,7 @@ def WatchTVNewReleases(provider=None):
 			fanart = ''
 			data = None			
 			pass
+
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVSubscriptions():
@@ -2419,8 +2420,10 @@ def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder
 		url += '&metadata='+  metadata
 	return xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=isFolder, totalItems=0)
 
-def setView(view):
+def setView(view, content=None):
 	if reg.getBoolSetting('enable-default-views'):
+		if content:
+			xbmcplugin.setContent(int(sys.argv[1]), content)
 		xbmc.executebuiltin("Container.SetViewMode("+view+")")
 		xbmcplugin.addSortMethod( handle=int( sys.argv[ 1 ] ), sortMethod=xbmcplugin.SORT_METHOD_UNSORTED )
 		xbmcplugin.addSortMethod( handle=int( sys.argv[ 1 ] ), sortMethod=xbmcplugin.SORT_METHOD_LABEL )
@@ -2506,8 +2509,10 @@ elif mode==30:
 	ClearDatabaseLock()
 elif mode==50:
 	log('Watch Stream')
-	
-	WatchStream(name, action, metadata=json.loads(metadata))
+	if metadata:
+		WatchStream(name, action, metadata=json.loads(metadata))
+	else:
+		WatchStream(name, action)
 elif mode==60:
 	log('Watch Episode')
 	WatchEpisode(name, action)
