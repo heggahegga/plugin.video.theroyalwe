@@ -215,7 +215,49 @@ def Download(url, dest, displayname=False):
             return False
         return True
 
-         
+def Notify(title, message, image=''):
+	if image == '':
+		image = xbmcpath(rootpath, 'icon.png')
+	xbmc.executebuiltin("XBMC.Notification("+title+","+message+", 1000, "+image+")")
+
+def log(msg, v=None, level=1, error=False):
+	if error:
+		msg = "********** Error %s" % msg
+	if v:
+		msg = msg % v
+
+	if (LOGGING_LEVEL == '1' or level == 0):
+		print msg         
+
+def readfile(path, soup=False):
+	try:
+		file = open(path, 'r')
+		content=file.read()
+		file.close()
+		if soup:
+			soup = BeautifulSoup(content)
+			return soup
+		else:
+			return content
+	except IOError, e:
+		log(e, level=1, error=True)
+		return ''
+
+def writefile(path, content):
+	try:
+		file = open(path, 'w')
+		file.write(content)
+		file.close()
+		return True
+	except IOError, e:
+		log(e, level=1, error=True)
+		return False
+
+def getLastPath():
+	return ADDON.getSetting('last-path')
+
+def setLastPath(path):
+	ADDON.setSetting('last-path', path)
 
 def _pbhook(numblocks, blocksize, filesize, dp, start_time):
 	import time
@@ -308,138 +350,6 @@ def ResetProviderPriorities():
 	msg2 = "For questions, support or feeback go to:"
 	msg3 = "[B]http://xbmchub.com/forum/[/B]"
 	dialog.ok(msg, msg2, msg3)
-	
-def sys_exit():
-	exit = xbmc.executebuiltin("XBMC.ActivateWindow(Home)")
-	return exit
-def Notify(title, message, image=''):
-	if image == '':
-		image = xbmcpath(rootpath, 'icon.png')
-	xbmc.executebuiltin("XBMC.Notification("+title+","+message+", 1000, "+image+")")
-
-def xbmcpath(path,filename):
-     translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
-     return translatedpath
-
-def showQuote(msg=''):
-	filepath = xbmcpath(rootpath+'/resources/', 'quotes.txt')
-	f = open(filepath)
-	lines = f.readlines(100)
-	n= random.randint(0, len(lines)-1)
-	quote = lines[n]
-	dialog = xbmcgui.Dialog()
-	dialog.ok(msg, quote)
-
-
-def htmldecode(body):
-	h = HTMLParser.HTMLParser()
-	body = h.unescape(body)
-	try:
-	    encoding = req.headers['content-type'].split('charset=')[-1]
-	except:
-	    enc_regex = re.search('<meta.+?charset=(.+?)" />')
-	    encoding = enc_regex.group(1)
-	body = unicode(body, encoding).encode('utf-8')
-	return body
-
-def log(msg, v=None, level=1):
-	if v:
-		msg = msg % v
-
-	if (LOGGING_LEVEL == '1' or level == 0):
-		print msg
-
-def ClearDatabaseLock():
-	dialog = xbmcgui.Dialog()
-	if dialog.yesno("Clear Database Lock?", "If a job has failed, you may manually delete the database lock.", "Do you want to proceed?"):
-		DB.connect()
-		DB.execute("UPDATE rw_status SET updating=0, job=''")
-		DB.commit()
-
-
-'''class TextBox:
-	# constants
-	WINDOW = 10147
-	CONTROL_LABEL = 1
-	CONTROL_TEXTBOX = 5
-
-	def __init__( self, *args, **kwargs):
-		# activate the text viewer window
-		xbmc.executebuiltin( "ActivateWindow(%d)" % ( self.WINDOW, ) )
-		# get window
-		self.window = xbmcgui.Window( self.WINDOW )
-		# give window time to initialize
-		xbmc.sleep( 100 )
-
-
-	def setControls( self ):
-		#get header, text
-		heading, text = self.message
-		# set heading
-		self.window.getControl( self.CONTROL_LABEL ).setLabel( "%s - %s" % ( heading, ADDON_NAME, ) )
-		# set text
-		self.window.getControl( self.CONTROL_TEXTBOX ).setText( text )
-
-   	def show(self, heading, text):
-		# set controls
-
-		self.message = heading, text
-		self.setControls()'''
-
-
-
-def RemoveDirectory(dir):
-	dialog = xbmcgui.Dialog()
-	if dialog.yesno("Remove directory", "Do you want to remove directory?", dir):
-		if os.path.exists(dir):
-			pDialog = xbmcgui.DialogProgress()
-			pDialog.create(' Removing directory...')
-			pDialog.update(0, dir)	
-			shutil.rmtree(dir)
-			pDialog.close()
-			Notification("Directory removed", dir)
-		else:
-			Notification("Directory not found", "Can't delete what does not exist.")	
-	
-
-	
-
-def CreateDirectory(dir_path):
-	dir_path = dir_path.strip()
-	if not os.path.exists(dir_path):
-		os.makedirs(dir_path)
-			
-'''def readfile(path, soup=False):
-	try:
-		file = open(path, 'r')
-		content=file.read()
-		file.close()
-		if soup:
-			soup = BeautifulSoup(content)
-			return soup
-		else:
-			return content
-	except:
-		return ''
-
-def writefile(path, content):
-	try:
-		file = open(path, 'w')
-		file.write(content)
-		file.close()
-		return True
-	except:
-		return False'''
-
-def DoSearch(msg):
-	kb = xbmc.Keyboard('', msg, False)
-    	kb.doModal()
-	if (kb.isConfirmed()):
-        	search = kb.getText()
-        	if search != '':
-			return search
-		else:
-			return False
 
 
 def SetupLibrary():
@@ -502,6 +412,11 @@ def SetupLibrary():
 
 
 def InstallSmartList():
+	dialog = xbmcgui.Dialog()
+	write_path = os.path.join(xbmc.translatePath('special://profile/playlists/video'), 'Recently Aired.xsp')
+	read_path = os.path.join(xbmc.translatePath(rootpath + '/resources'), 'Recently Aired.xsp')
+	ok = writefile(write_path, readfile(read_path))
+
 	msg = 'SmartList Installed!'
 	msg2 = "For questions, support or feeback go to:"
 	msg3 = "[B]http://xbmchub.com/forum/[/B]"
@@ -682,11 +597,7 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 		log("Failed launching stream")
 		
 
-def getLastPath():
-	return ADDON.getSetting('last-path')
 
-def setLastPath(path):
-	ADDON.setSetting('last-path', path)
 
 def WatchStream(name, action, ignore_prefered = False, metadata = None):
 	if name == getLastPath():
@@ -1814,12 +1725,6 @@ def WatchTVNewReleases(provider=None):
 				temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
 				if not temp: temp = re.search("^(.+?) S(\d{1,3})E(\d{1,4}): ", episode[1])
 				if not temp: temp = re.search("^(.+?) (\d{1,3})x(\d{1,4})$", episode[1])
-				'''temp = re.search("^(.+?) (\d{1,3})x(\d{1,3}) ", episode[1])
-				if temp:
-					t = temp.group(1)
-					s = int(temp.group(2))				
-					e = int(temp.group(3))
-				temp = re.search("^(.+?) S(\d{1,3})E(\d{1,3}): ", episode[1])'''
 				if temp:
 					t = temp.group(1)
 					s = int(temp.group(2))				
@@ -1852,7 +1757,7 @@ def WatchTVNewReleases(provider=None):
 			fanart = ''
 			data = None			
 			pass
-
+	setView('default-episode-view', 'episodes')	
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVSubscriptions():
@@ -1922,7 +1827,7 @@ def WatchMovieIMDBResults(name):
 				commands = addCommand(commands, 'Add to Trakt Watchlist', 1231, imdb)
 				commands = addCommand(commands, 'Add to IMDB Watchlist', 1241, imdb)
 			AddOption(title, True, 1259, movie['title'], iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
-	setView('default-movie-view')	
+	setView('default-movie-view', 'movies')	
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def addCommand(container, text, mode, name='', action=''):
@@ -2161,6 +2066,7 @@ def SettingsMenu():
 	AddOption('Walter Settings',False, 4700, iconImage=art+'/donniesettings.jpg')
 	AddOption('Service Providers',True, 4300, iconImage=art+'/serviceproviders.jpg')
 	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/urlresolversettings.jpg')
+	AddOption('Metahandler Settings',False, 4410, iconImage=art+'/urlresolversettings.jpg')
 	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/cleardatabaselock.jpg')
 	AddOption('Install TRW to source.xml',False, 4600, iconImage=art+'/addtrwtosource.jpg')
 	AddOption('Install Recently Aired SmartList',False, 4800, iconImage=art+'/addtrwtosource.jpg')
@@ -2813,9 +2719,10 @@ elif mode==4350:
 	ResetProviderPriorities()
 elif mode==4400:
 	log('URLResolver Settings')
-	#import urlresolver
-	#urlresolver.display_settings()
 	xbmcaddon.Addon(id='script.module.urlresolver').openSettings()
+elif mode==4410:
+	log('Metahanlder Settings')
+	xbmcaddon.Addon(id='script.module.metahandler').openSettings()
 elif mode==4500:
 	log('Clear Database Lock')
 	ClearDatabaseLock()

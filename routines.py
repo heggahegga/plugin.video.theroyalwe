@@ -1,9 +1,12 @@
 import sys
 import os
 import re
+import shutil
 import xbmc, xbmcgui, xbmcaddon
 from t0mm0.common.addon import Addon
 from donnie import htmlcleaner
+import HTMLParser
+from BeautifulSoup import BeautifulSoup, Tag, NavigableString
 ADDON_NAME = 'The Royal We'
 ADDON_ID = 'plugin.video.theroyalwe'
 ADDON = xbmcaddon.Addon(id=ADDON_ID)
@@ -40,27 +43,7 @@ class TextBox:
 		self.message = heading, text
 		self.setControls()
 
-def readfile(path, soup=False):
-	try:
-		file = open(path, 'r')
-		content=file.read()
-		file.close()
-		if soup:
-			soup = BeautifulSoup(content)
-			return soup
-		else:
-			return content
-	except:
-		return ''
 
-def writefile(path, content):
-	try:
-		file = open(path, 'w')
-		file.write(content)
-		file.close()
-		return True
-	except:
-		return False
 
 def showWelcome():
 	path = os.path.join(xbmc.translatePath(ROOT_PATH + '/resources'), 'welcome.html')
@@ -75,6 +58,37 @@ def removeYear(s, regex='( \(\d{4}\))$'):
 	s = s.strip()
 	return s
 	
+def DoSearch(msg):
+	kb = xbmc.Keyboard('', msg, False)
+    	kb.doModal()
+	if (kb.isConfirmed()):
+        	search = kb.getText()
+        	if search != '':
+			return search
+		else:
+			return False
+
+
+def CreateDirectory(dir_path):
+	dir_path = dir_path.strip()
+	if not os.path.exists(dir_path):
+		os.makedirs(dir_path)
+
+def RemoveDirectory(dir):
+	dialog = xbmcgui.Dialog()
+	if dialog.yesno("Remove directory", "Do you want to remove directory?", dir):
+		if os.path.exists(dir):
+			pDialog = xbmcgui.DialogProgress()
+			pDialog.create(' Removing directory...')
+			pDialog.update(0, dir)	
+			shutil.rmtree(dir)
+			pDialog.close()
+			Notification("Directory removed", dir)
+		else:
+			Notification("Directory not found", "Can't delete what does not exist.")	
+	
+
+
 
 def CleanFileName(s, remove_year=True, use_encoding = False, use_blanks = True):
 		if remove_year:
@@ -107,4 +121,47 @@ def CleanFileName(s, remove_year=True, use_encoding = False, use_blanks = True):
 			s = s.replace('&#xBD;', ' ') #half character
 			s = s.replace('&#xB3;', ' ')
 			s = s.replace('&#xB0;', ' ') #degree character
-		return s	
+		return s
+
+def sys_exit():
+	exit = xbmc.executebuiltin("XBMC.ActivateWindow(Home)")
+	return exit
+
+def Notify(title, message, image=''):
+	if image == '':
+		image = xbmcpath(rootpath, 'icon.png')
+	xbmc.executebuiltin("XBMC.Notification("+title+","+message+", 1000, "+image+")")
+
+def xbmcpath(path,filename):
+     translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
+     return translatedpath
+
+def showQuote(msg=''):
+	filepath = xbmcpath(rootpath+'/resources/', 'quotes.txt')
+	f = open(filepath)
+	lines = f.readlines(100)
+	n= random.randint(0, len(lines)-1)
+	quote = lines[n]
+	dialog = xbmcgui.Dialog()
+	dialog.ok(msg, quote)
+
+
+def htmldecode(body):
+	h = HTMLParser.HTMLParser()
+	body = h.unescape(body)
+	try:
+	    encoding = req.headers['content-type'].split('charset=')[-1]
+	except:
+	    enc_regex = re.search('<meta.+?charset=(.+?)" />')
+	    encoding = enc_regex.group(1)
+	body = unicode(body, encoding).encode('utf-8')
+	return body
+
+
+
+def ClearDatabaseLock():
+	dialog = xbmcgui.Dialog()
+	if dialog.yesno("Clear Database Lock?", "If a job has failed, you may manually delete the database lock.", "Do you want to proceed?"):
+		DB.connect()
+		DB.execute("UPDATE rw_status SET updating=0, job=''")
+		DB.commit()	
