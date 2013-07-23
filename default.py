@@ -11,6 +11,7 @@
 import urllib2, urllib, sys, os, re, random, copy, shutil
 import xbmc,xbmcplugin,xbmcgui,xbmcaddon
 import HTMLParser
+from donnie import htmlcleaner
 from urllib import quote_plus
 #from t0mm0.common.net import Net
 from t0mm0.common.addon import Addon
@@ -214,7 +215,7 @@ class TextBox:
 
 
 def showWelcome():
-	path = os.path.join(xbmc.translatePath(ROOT_PATH + '/resources'), 'welcome.html')
+	path = os.path.join(xbmc.translatePath(DATA_PATH + '/resources'), 'welcome.html')
 	text = readfile(path)
 	TextBox().show('Welcome new user!', text)
 
@@ -302,7 +303,7 @@ def xbmcpath(path,filename):
      return translatedpath
 
 def showQuote(msg=''):
-	filepath = xbmcpath(ROOT_PATH+'/resources/', 'quotes.txt')
+	filepath = xbmcpath(DATA_PATH+'/resources/', 'quotes.txt')
 	f = open(filepath)
 	lines = f.readlines(100)
 	n= random.randint(0, len(lines)-1)
@@ -2163,7 +2164,7 @@ def WatchMovieIMDBMenu():
 def ManageMenu():
 	AddOption('TV Shows',True, 2100, iconImage=art+'/tvshows.jpg')
 	AddOption('Movies',True, 2200, iconImage=art+'/movies.jpg')
-	AddOption('Walter Caching Service',True, 5000)
+	AddOption('Walter Caching Service',True, 5000, iconImage=art+'/ws_management.jpg')
 	AddOption('Backup Database',False, 2300, iconImage=art+'/backup.jpg')
 	AddOption('Restore Database',False, 2400, iconImage=art+'/restore.jpg')
 	AddOption('Download Remote Update',False, 2410, iconImage=art+'/restore.jpg')
