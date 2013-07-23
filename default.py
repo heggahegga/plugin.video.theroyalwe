@@ -977,6 +977,7 @@ def ViewTVSubscriptions(): #Show Subscriptions
 			AddOption('[B]'+str(row[1])+'[/B]', False, 2111, showid, showname,contextMenuItems=commands)
 		else:
 			AddOption('[COLOR red]'+str(row[1])+'[/COLOR]', False, 2111, showid, showname,contextMenuItems=commands)
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1442,6 +1443,7 @@ def WatchTVResults(name, action):
 		except:
 			commands = []
 			pass
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -1857,6 +1859,7 @@ def WatchTVNewReleases(provider=None):
 		for provider in providers:
 			if reg.getBoolSetting('enable-' + provider):
 				AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
+		setView('default-folder-view')
 		xbmcplugin.endOfDirectory(int(sys.argv[1]))
 		return
 	DB.connect()
@@ -1881,12 +1884,12 @@ def WatchTVNewReleases(provider=None):
 					data=META.get_episode_meta(t, tv_meta['imdb_id'], s, e)
 					fanart = data['backdrop_url']
 					icon = ''
-					if data['overlay'] == 6:
+					'''if data['overlay'] == 6:
 						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'true')
 						commands.append(('Mark Watched', cmd, ''))
 					elif data['overlay'] == 7:
 						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'false')
-						commands.append(('Mark Unwatched', cmd, ''))
+						commands.append(('Mark Unwatched', cmd, ''))'''
 					
 				t = None
 			else:
@@ -2069,12 +2072,14 @@ def AddonMenu():  #homescreen
 	AddOption('Manage',True, 2000, iconImage=art+'/manage.jpg')
 	AddOption('Support',True, 3000, iconImage=art+'/support.jpg')
 	AddOption('Settings',True, 4000, iconImage=art+'/settings.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMenu():
 	AddOption('TV Shows',True, 1100, iconImage=art+'/tvshows.jpg')
 	AddOption('Movies',True, 1200, iconImage=art+'/movies.jpg')
 	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVMenu():
@@ -2085,6 +2090,7 @@ def WatchTVMenu():
 	AddOption('Trakt.TV',True, 1130, iconImage=art+'/trakt.jpg')
 	AddOption('IMDB',True, 1140, iconImage=art+'/imdb.jpg')
 	AddOption('Search',True, 1150, iconImage=art+'/search.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVAZMenu():
@@ -2093,6 +2099,7 @@ def WatchTVAZMenu():
 		if character == '#1234': character = '1234'
 		icon = path+ urllib.quote_plus(character.lower()+'.jpg')
 		AddOption(character,True,1119,character,iconImage=icon)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVGenreMenu():
@@ -2104,6 +2111,7 @@ def WatchTVGenreMenu():
 		if genre in ["japanese", 'none', "talkshow"]: genre = 'genre'
 		icon = path+ urllib.quote_plus(genre+'.jpg')
 		AddOption(row[0],True,1129, row[0],iconImage=icon)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVTraktMenu():
@@ -2111,11 +2119,13 @@ def WatchTVTraktMenu():
 	AddOption('Trakt.tv Trending',True,1139, 'trending', 'trakt', iconImage=art+'/trakttrending.jpg')
 	AddOption('Trakt.tv Recommended',True, 1139, 'recommended', 'trakt', iconImage=art+'/traktrecommended.jpg')
 	AddOption('Trakt.tv Personal Lists',True, 1139, 'custom', 'trakt', iconImage=art+'/traktpersonallists.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVIMDBMenu():
 	AddOption('IMDB Watchlist',True,1149, 'watchlist', 'imdb', iconImage=art+'/imdbwatchlist.jpg')
 	AddOption('IMDB Popular TV',True,1149, 'popular', 'imdb', iconImage=art+'/imdbpopulartv.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieMenu():
@@ -2124,6 +2134,7 @@ def WatchMovieMenu():
 	AddOption('Trakt.TV',True, 1230, iconImage=art+'/trakt.jpg')
 	AddOption('IMDB',True, 1240, iconImage=art+'/imdb.jpg')
 	AddOption('Search',True, 1250, iconImage=art+'/search.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieAZMenu():
@@ -2132,6 +2143,7 @@ def WatchMovieAZMenu():
 		if character == '#1234': character = '1234'
 		icon = path+ urllib.quote_plus(character.lower()+'.jpg')
 		AddOption(character,True,1219,character,iconImage=icon)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieGenreMenu():
@@ -2143,6 +2155,7 @@ def WatchMovieGenreMenu():
 		if genre in ["japanese", 'none', "talkshow"]: genre = 'genre'
 		icon = path+ urllib.quote_plus(genre+'.jpg')
 		AddOption(row[0],True,1229, row[0],iconImage=icon)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieTraktMenu():
@@ -2152,6 +2165,7 @@ def WatchMovieTraktMenu():
 	AddOption('Trakt.tv Personal Lists',True, 1239, 'custom', 'trakt', iconImage=art+'/traktpersonallists.jpg')
 	AddOption('Trakt.tv Liked Lists',True, 1239, 'liked', 'trakt', iconImage=art+'/traktliked.jpg')
 	AddOption('Trakt.tv Popular Lists',True, 1239, 'popular', 'trakt', iconImage=art+'/traktpopular.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieIMDBMenu():
@@ -2159,6 +2173,7 @@ def WatchMovieIMDBMenu():
 	AddOption('IMDB Top 250',True,1249, 'top250', 'imdb', iconImage=art+'/imdbtop250.jpg')
 	AddOption('IMDB MovieMeter',True,1249, 'moviemeter', 'imdb', iconImage=art+'/imdbmoviemeter.jpg')
 	AddOption('IMDB Best Picture Winners',True,1249, 'bestpictures', 'imdb', iconImage=art+'/imdbbestpicturewinners.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ManageMenu():
@@ -2168,6 +2183,7 @@ def ManageMenu():
 	AddOption('Backup Database',False, 2300, iconImage=art+'/backup.jpg')
 	AddOption('Restore Database',False, 2400, iconImage=art+'/restore.jpg')
 	AddOption('Download Remote Update',False, 2410, iconImage=art+'/restore.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ManageTVMenu():
@@ -2176,12 +2192,14 @@ def ManageTVMenu():
 	AddOption('Update TV Show Subscriptions',False, 2130, iconImage=art+'/updatesubscriptions.jpg')	
 	AddOption('Cache Available TV Shows',False, 2140, iconImage=art+'/cacheavailabletvshows.jpg')	
 	AddOption('Delete All Subscriptions',False, 2150, iconImage=art+'/deleteallsubscriptions.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
 def ManageMovieMenu():
 	AddOption('Cache Available Movies',False, 2150, iconImage=art+'/cacheavalaiblemovies.jpg')
 	AddOption('Add Movies to Library',True, 1200, iconImage=art+'/addmoviestolibrary.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -2192,6 +2210,7 @@ def SupportMenu():
 	AddOption('View XMBC.log',False, 3300, iconImage=art+'/log.jpg')
 	AddOption('Submit log to xbmclogs',False, 3400, iconImage=art+'/submitlog.jpg')
 	AddOption('Watch a demo',False, 3500, iconImage=art+'/watch.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def FAQMenu():
@@ -2205,6 +2224,7 @@ def FAQMenu():
 		title = heading['title']
 		id = heading['id']
 		AddOption(title, False, 3210, id, iconImage=art+'/faq.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -2218,6 +2238,7 @@ def SettingsMenu():
 	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/cleardatabaselock.jpg')
 	AddOption('Install TRW to source.xml',False, 4600, iconImage=art+'/addtrwtosource.jpg')
 	AddOption('Install Recently Aired SmartList',False, 4800, iconImage=art+'/addtrwtosource.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ProviderMenu():
@@ -2237,6 +2258,7 @@ def ProviderMenu():
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'movies')			
 		commands.append(('Update Movies', cmd, ''))
 		AddOption(SCR.getScraperByIndex(index).name, True, 4320, SCR.getScraperByIndex(index).service, iconImage=art+'/'+service+'.jpg', contextMenuItems=commands)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def AvailableProviders(name):
@@ -2251,6 +2273,7 @@ def AvailableProviders(name):
 				AddOption('[COLOR red]'+str(row[1])+'[/COLOR]', False, 4340, str(row[0]))
 		except:
 			pass
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ListProviders():
@@ -2260,6 +2283,7 @@ def ListProviders():
 		name = "[B]%s.[/B] %s - %s" % (row[2], row[0], row[1])
 		key = "%s:%s:%s - %s" % (row[3], row[2], row[0], row[1])
 		AddOption(name,False, 4330, key)
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WalterMenu():
@@ -2267,6 +2291,7 @@ def WalterMenu():
 	AddOption('Walter Queue', True, 5200, iconImage=art+'/queue_manager.jpg')
 	AddOption('Cached Movies', True, 5400, iconImage=art+'/movies.jpg')
 	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/tvshows.jpg')
+	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def DeleteCachedFile(media, filename):
@@ -2290,7 +2315,7 @@ def CachedMovies():
 
 	except Exception as e:
     		log('Cached File Error %s' %s)
-
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def CachedTVShows():
@@ -2298,6 +2323,7 @@ def CachedTVShows():
 		tvshow_root = reg.getSetting('cache_tvshow_directory')
 	else:
 		tvshow_root = os.path.join(xbmc.translatePath(self.cache_root + '/tvshows'), '')
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ViewWalterQueue():
@@ -2338,6 +2364,7 @@ def ViewWalterQueue():
 		commands.append(('Clear All Failed', cmd, ''))
 		iconImage=art+'/%s.jpg' % icon
 		AddOption(name,False, 5300, str(item[0]), contextMenuItems=commands, iconImage=iconImage)
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def CancelQueueItem(qid, name):
@@ -2511,11 +2538,14 @@ def AddOption(text, isFolder, mode, name='', action='', iconImage="DefaultFolder
 		url += '&metadata='+  metadata
 	return xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=isFolder, totalItems=0)
 
-def setView(view, content=None):
+def setView(view, content=None, viewid=None):
 	if reg.getBoolSetting('enable-default-views'):
+		log("Setting view to %s" % view)
 		if content:
 			xbmcplugin.setContent(int(sys.argv[1]), content)
-		xbmc.executebuiltin("Container.SetViewMode("+view+")")
+		if not viewid:
+			viewid = reg.getSetting(view)
+		xbmc.executebuiltin("Container.SetViewMode(%s)" % viewid)
 		xbmcplugin.addSortMethod( handle=int( sys.argv[ 1 ] ), sortMethod=xbmcplugin.SORT_METHOD_UNSORTED )
 		xbmcplugin.addSortMethod( handle=int( sys.argv[ 1 ] ), sortMethod=xbmcplugin.SORT_METHOD_LABEL )
 		xbmcplugin.addSortMethod( handle=int( sys.argv[ 1 ] ), sortMethod=xbmcplugin.SORT_METHOD_VIDEO_RATING )
