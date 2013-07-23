@@ -33,8 +33,6 @@ try:
 	import simplejson as json
 except ImportError: 
 	import json
-import routines
-from routines import *
 
 ############################
 ### Enviornment		 ###
@@ -183,6 +181,156 @@ def RestoreRemoteDatabase():
 ###########################
 ### General functions 	###
 ###########################
+
+class TextBox:
+	# constants
+	WINDOW = 10147
+	CONTROL_LABEL = 1
+	CONTROL_TEXTBOX = 5
+
+	def __init__( self, *args, **kwargs):
+		# activate the text viewer window
+		xbmc.executebuiltin( "ActivateWindow(%d)" % ( self.WINDOW, ) )
+		# get window
+		self.window = xbmcgui.Window( self.WINDOW )
+		# give window time to initialize
+		xbmc.sleep( 500 )
+
+
+	def setControls( self ):
+		#get header, text
+		heading, text = self.message
+		# set heading
+		self.window.getControl( self.CONTROL_LABEL ).setLabel( "%s - %s v%s" % ( heading, ADDON_NAME, VERSION) )
+		# set text
+		self.window.getControl( self.CONTROL_TEXTBOX ).setText( text )
+
+   	def show(self, heading, text):
+		# set controls
+
+		self.message = heading, text
+		self.setControls()
+
+
+
+def showWelcome():
+	path = os.path.join(xbmc.translatePath(ROOT_PATH + '/resources'), 'welcome.html')
+	text = readfile(path)
+	TextBox().show('Welcome new user!', text)
+
+def removeYear(s, regex='( \(\d{4}\))$'):
+	has_year = re.search(regex, s)
+	if has_year:
+		s = s[0:len(s)-7]
+	s = htmlcleaner.clean(s,strip=True)
+	s = s.strip()
+	return s
+	
+def DoSearch(msg):
+	kb = xbmc.Keyboard('', msg, False)
+    	kb.doModal()
+	if (kb.isConfirmed()):
+        	search = kb.getText()
+        	if search != '':
+			return search
+		else:
+			return False
+
+
+def CreateDirectory(dir_path):
+	dir_path = dir_path.strip()
+	if not os.path.exists(dir_path):
+		os.makedirs(dir_path)
+
+def RemoveDirectory(dir):
+	dialog = xbmcgui.Dialog()
+	if dialog.yesno("Remove directory", "Do you want to remove directory?", dir):
+		if os.path.exists(dir):
+			pDialog = xbmcgui.DialogProgress()
+			pDialog.create(' Removing directory...')
+			pDialog.update(0, dir)	
+			shutil.rmtree(dir)
+			pDialog.close()
+			Notification("Directory removed", dir)
+		else:
+			Notification("Directory not found", "Can't delete what does not exist.")	
+	
+
+
+
+def CleanFileName(s, remove_year=True, use_encoding = False, use_blanks = True):
+		if remove_year:
+			s=removeYear(s)
+		if use_encoding:
+			s = s.replace('"', '%22')
+			s = s.replace('*', '%2A')
+			s = s.replace('/', '%2F')
+			s = s.replace(':', ',')
+			s = s.replace('<', '%3C')
+			s = s.replace('>', '%3E')
+			s = s.replace('?', '%3F')
+			s = s.replace('\\', '%5C')
+			s = s.replace('|', '%7C')
+			s = s.replace('&frac12;', '%BD')
+			s = s.replace('&#xBD;', '%BD') #half character
+			s = s.replace('&#xB3;', '%B3')
+			s = s.replace('&#xB0;', '%B0') #degree character		
+		if use_blanks:
+			s = s.replace('"', ' ')
+			s = s.replace('*', ' ')
+			s = s.replace('/', ' ')
+			s = s.replace(':', ' ')
+			s = s.replace('<', ' ')
+			s = s.replace('>', ' ')
+			s = s.replace('?', ' ')
+			s = s.replace('\\', ' ')
+			s = s.replace('|', ' ')
+			s = s.replace('&frac12;', ' ')
+			s = s.replace('&#xBD;', ' ') #half character
+			s = s.replace('&#xB3;', ' ')
+			s = s.replace('&#xB0;', ' ') #degree character
+		return s
+
+def sys_exit():
+	exit = xbmc.executebuiltin("XBMC.ActivateWindow(Home)")
+	return exit
+
+
+
+def xbmcpath(path,filename):
+     translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
+     return translatedpath
+
+def showQuote(msg=''):
+	filepath = xbmcpath(ROOT_PATH+'/resources/', 'quotes.txt')
+	f = open(filepath)
+	lines = f.readlines(100)
+	n= random.randint(0, len(lines)-1)
+	quote = lines[n]
+	dialog = xbmcgui.Dialog()
+	dialog.ok(msg, quote)
+
+
+def htmldecode(body):
+	h = HTMLParser.HTMLParser()
+	body = h.unescape(body)
+	try:
+	    encoding = req.headers['content-type'].split('charset=')[-1]
+	except:
+	    enc_regex = re.search('<meta.+?charset=(.+?)" />')
+	    encoding = enc_regex.group(1)
+	body = unicode(body, encoding).encode('utf-8')
+	return body
+
+
+
+def ClearDatabaseLock():
+	dialog = xbmcgui.Dialog()
+	if dialog.yesno("Clear Database Lock?", "If a job has failed, you may manually delete the database lock.", "Do you want to proceed?"):
+		DB.connect()
+		DB.execute("UPDATE rw_status SET updating=0, job=''")
+		DB.commit()
+
 
 class StopDownloading(Exception): 
         def __init__(self, value): 
@@ -1192,7 +1340,8 @@ def ViewStatus():
 	[B]Maude[/B]:				%s
 	[B]AutoUpdater[/B]: 			%s
 	[B]Donnie[/B]: 				%s - %s
-	
+	[B]Walter[/B]:				
+
 	Donnie update times:
 	------------------------------------------	
 	[B]Last TV Show Index[/B]: 		%s
@@ -1212,10 +1361,7 @@ def ViewStatus():
 	[B]WarezTuga - TV[/B]: 			%s
 	[B]WarezTuga - Movies[/B]: 		%s
 	[B]Vidics - TV[/B]: 			%s
-	[B]Vidics - Movies[/B]:			try: 
-	import simplejson as json
-except ImportError: 
-	import json%s
+	[B]Vidics - Movies[/B]:			%s
 	[B]TubePlus - TV[/B]: 			%s
 	[B]TubePlus - Movies[/B]:		%s
 	[B]Alluc - TV[/B]: 			%s
@@ -1779,6 +1925,7 @@ def WatchTVSubscriptions():
 		showid = urllib.quote_plus(str(row[0]))
 		showname = urllib.quote_plus(str(row[1]))
 		AddOption(str(row[1]), True, 1190, showid, iconImage=icon, fanart=fanart, meta=data)
+	setView('default-tvshow-view', 'tvshows')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieIMDBResults(name):
@@ -2063,7 +2210,7 @@ def FAQMenu():
 def SettingsMenu():
 	AddOption('The Royal We Settings',False, 4100, iconImage=art+'/theroyalwesttings.jpg')
 	AddOption('Donnie Settings',False, 4200, iconImage=art+'/donniesettings.jpg')
-	AddOption('Walter Settings',False, 4700, iconImage=art+'/donniesettings.jpg')
+	AddOption('Walter Settings',False, 4700, iconImage=art+'/ws_settings.jpg')
 	AddOption('Service Providers',True, 4300, iconImage=art+'/serviceproviders.jpg')
 	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/urlresolversettings.jpg')
 	AddOption('Metahandler Settings',False, 4410, iconImage=art+'/urlresolversettings.jpg')
@@ -2075,7 +2222,7 @@ def SettingsMenu():
 def ProviderMenu():
 	log("Listing service providers")
 	AddOption("Modify Priorites", True, 4310, iconImage=art+'/serviceproviders.jpg')
-	AddOption("Reset Priorites", True, 4350, iconImage=art+'/serviceproviders.jpg')
+	AddOption("Reset Priorites", True, 4350, iconImage=art+'/reset.jpg')
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	for index in range(0, len(SCR.activeScrapers)):
 		commands = []
@@ -2115,8 +2262,41 @@ def ListProviders():
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WalterMenu():
-	AddOption('Walter Status', False, 5100)
-	AddOption('Walter Queue', True, 5200)
+	AddOption('Walter Status', False, 5100,iconImage=art+'/view-status.jpg')
+	AddOption('Walter Queue', True, 5200, iconImage=art+'/queue_manager.jpg')
+	AddOption('Cached Movies', True, 5400, iconImage=art+'/movies.jpg')
+	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/tvshows.jpg')
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def DeleteCachedFile(media, filename):
+	print media
+	print filename
+
+def CachedMovies():
+	if reg.getBoolSetting('cache_movie_custom_directory'):
+		movie_root = reg.getSetting('cache_movie_directory')
+	else:
+		movie_root = os.path.join(xbmc.translatePath(self.cache_root + '/movies'), '')
+
+	try:
+ 		movies = os.listdir(movie_root)
+		for movie in movies:
+			commands = []
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'movie', movie)			
+			commands.append(('Delete', cmd, ''))
+			AddOption(movie, False, 5100,contextMenuItems=commands)
+		
+
+	except Exception as e:
+    		log('Cached File Error %s' %s)
+
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def CachedTVShows():
+	if reg.getBoolSetting('cache_tvshow_custom_directory'):
+		tvshow_root = reg.getSetting('cache_tvshow_directory')
+	else:
+		tvshow_root = os.path.join(xbmc.translatePath(self.cache_root + '/tvshows'), '')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ViewWalterQueue():
@@ -2133,26 +2313,30 @@ def ViewWalterQueue():
 			name = "%s - [B][COLOR %s]%s[/COLOR][/B]" % (media,'green', item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5210, item[0], item[2])			
 			commands.append(('Cancle', cmd, ''))
+			icon = 'caching'
 		elif item[6] == 3:
 			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'red', item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5260, item[0], '')			
 			commands.append(('Re-add to queue', cmd, ''))
+			icon = 'failed'
 		elif item[6] == 2:
 			name = "%s - %s" % (media, item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5270, item[0], '')			
 			commands.append(('Remove from queue', cmd, ''))
+			icon = 'completed'
 		else:
 			
 			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'yellow', item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5230, item[0], item[2])			
 			commands.append(('Remove from pending', cmd, ''))
+			icon = 'pending'
 
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5280, '', '')			
 		commands.append(('Clear All Completed', cmd, ''))
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5290, '', '')			
 		commands.append(('Clear All Failed', cmd, ''))
-
-		AddOption(name,False, 5300, str(item[0]), contextMenuItems=commands)
+		iconImage=art+'/%s.jpg' % icon
+		AddOption(name,False, 5300, str(item[0]), contextMenuItems=commands, iconImage=iconImage)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def CancelQueueItem(qid, name):
@@ -2766,6 +2950,18 @@ elif mode==5290:
 elif mode==5300:
 	log('Walter Progress Bar')
 	ShowCacheProgress()
+
+elif mode==5400:
+	log('Cached Movies')
+	CachedMovies()
+
+elif mode==5410:
+	log('Cached TV Shows')
+	CachedTVShows()
+
+elif mode==5490:
+	log('Delete cached file')
+	DeleteCachedFile(name, action)
 
 
 
