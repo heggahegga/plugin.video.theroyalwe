@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<strings>
+  <!-- Providers -->
+	<string id="30100">Aktivera Icefilms</string>
+	<string id="30101">     Icefilms URL</string>
+	<string id="30102">Aktivera 1Channel</string>
+	<string id="30103">     1Channel URL</string>
+	<string id="30104">Aktivera FastPassTV</string>
+	<string id="30105">     FastPassTV URL</string>
+	<string id="30106">Aktivera WarezTuga</string>
+	<string id="30107">     WarezTuga URL</string>
+	<string id="30108">Aktivera Vidics</string>
+	<string id="30109">Aktivera Furk</string>
+	<string id="30110">Aktivera Alluc</string>
+	<string id="30111">Aktivera TubePlus</string>
+	<string id="30112">Aktivera WatchSeries</string>
+	<string id="30113">Aktivera SimplyMovies</string>
+	<!-- Accounts -->
+	<string id="30200">Dölj lyckad inloggning</string>
+	<string id="30201">    Användarnamn</string>
+	<string id="30202">    Lösenord</string>
+	<string id="30203">    Real-Debrid</string>
+	<string id="30204">    Movreel</string>
+
+	<string id="30205">URL Resolver</string>
+	<string id="30206">WarezTuga Användarnamn</string>
+	<string id="30207">WarezTuga Lösenord</string>
+	<string id="30208">Furk Användarnamn</string>
+	<string id="30209">Furk Lösenord</string>
+	<!-- Database -->
+	<string id="30500">Använd SQLite Databas</string>
+	<string id="30501">Använd MySQL Databas</string>
+	<string id="30502">    MySQL Värd</string>
+	<string id="30503">    Videobibliotekets Databasnamn</string>
+	<string id="30504">    Användarnamn</string>
+	<string id="30505">    Lösenord</string>
+	<string id="30506">    SQLite Videobiblioteksnamn</string>
+	<!-- Directories -->
+	<string id="30300">Använd egen katalog</string>
+	<string id="30301">    Filmkatalog</string>	
+	<string id="30400">Använd egen katalog</string>
+	<string id="30401">    TV-serie katalog</string>	
+	<string id="30402">    Nedladdningskatalog</string>
+	
+	<!-- Automatic Update -->
+	<string id="30600">Aktivera automatiska uppdateringar</string>
+	<string id="30601">    Hämta nya avsnitt från prenumererade TV-serier</string>
+	<string id="30602">    Cacha Speglar från prenumererade TV-serier</string>
+	<string id="30603">    Hämta nya TV-serier</string>
+	<string id="30604">    Hämta nya filmer</string>
+	<string id="30605">    Autouppdatera Videobiblioteket</string>
+	<string id="30606">    Ladda ner omslag m.m. automatiskt</string>
+	<string id="30607">    Updateringsintervall</string>
+	<string id="30608">Aktivera Automatisk Backup</string>
+	<string id="30609">    Backupintervall</string>
+</strings>
