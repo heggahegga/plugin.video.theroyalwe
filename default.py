@@ -2117,29 +2117,29 @@ def DragProvider(key):
 
 def AddonMenu():  #homescreen
 	log('The Royal We menu', level=0)
-	AddOption('Watch',True, 1000, iconImage=art+'/watch.jpg')
-	AddOption('Manage',True, 2000, iconImage=art+'/manage.jpg')
-	AddOption('Support',True, 3000, iconImage=art+'/support.jpg')
-	AddOption('Settings',True, 4000, iconImage=art+'/settings.jpg')
+	AddOption('Watch',True, 1000, iconImage=art+'/main/watch.jpg')
+	AddOption('Manage',True, 2000, iconImage=art+'/main/manage.jpg')
+	AddOption('Support',True, 3000, iconImage=art+'/main/support.jpg')
+	AddOption('Settings',True, 4000, iconImage=art+'/main/settings.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMenu():
-	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
-	AddOption('TV Shows',True, 1100, iconImage=art+'/tvshows.jpg')
-	AddOption('Movies',True, 1200, iconImage=art+'/movies.jpg')
-	AddOption('Cached',True, 5480)
+	AddOption('New Episodes',True, 1160, iconImage=art+'/watch/new_episodes.jpg')
+	AddOption('TV Shows',True, 1100, iconImage=art+'/watch/tvshows.jpg')
+	AddOption('Movies',True, 1200, iconImage=art+'/watch/movies.jpg')
+	AddOption('Cached',True, 5480, iconImage=art+'/watch/cached.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVMenu():
-	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
-	AddOption('Subscriptions',True, 1170, iconImage=art+'/watchsubscriptions.jpg')
-	AddOption('Browse A-Z',True, 1110, iconImage=art+'/a-z.jpg')
-	AddOption('Browse Genres',True, 1120, iconImage=art+'/browsegenres.jpg')
-	AddOption('Trakt.TV',True, 1130, iconImage=art+'/trakt.jpg')
-	AddOption('IMDB',True, 1140, iconImage=art+'/imdb.jpg')
-	AddOption('Search',True, 1150, iconImage=art+'/search.jpg')
+	AddOption('New Episodes',True, 1160, iconImage=art+'/watch/new_episodes.jpg')
+	AddOption('Subscriptions',True, 1170, iconImage=art+'/watch/watch_subscribed.jpg')
+	AddOption('Browse A-Z',True, 1110, iconImage=art+'/watch/a-z.jpg')
+	AddOption('Browse Genres',True, 1120, iconImage=art+'/watch/genre.jpg')
+	AddOption('Trakt.TV',True, 1130, iconImage=art+'/watch/trakt.jpg')
+	AddOption('IMDB',True, 1140, iconImage=art+'/watch/imdb.jpg')
+	AddOption('Search',True, 1150, iconImage=art+'/watch/search.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2158,32 +2158,33 @@ def WatchTVGenreMenu():
 	rows = DB.query("SELECT distinct genre from rw_showgenres ORDER BY genre ASC")
 	for row in rows:
 		genre = row[0].lower().replace('-', '')
-		if genre in ["japanese", 'none', "talkshow"]: genre = 'genre'
 		icon = path+ urllib.quote_plus(genre+'.jpg')
+		if not os.path.exists(icon):	
+			icon = path + 'genre.jpg'
 		AddOption(row[0],True,1129, row[0],iconImage=icon)
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVTraktMenu():
-	AddOption('Trakt.tv Watchlist',True,1139, 'watchlist', 'trakt', iconImage=art+'/traktwatchlist.jpg')
-	AddOption('Trakt.tv Trending',True,1139, 'trending', 'trakt', iconImage=art+'/trakttrending.jpg')
-	AddOption('Trakt.tv Recommended',True, 1139, 'recommended', 'trakt', iconImage=art+'/traktrecommended.jpg')
-	AddOption('Trakt.tv Personal Lists',True, 1139, 'custom', 'trakt', iconImage=art+'/traktpersonallists.jpg')
+	AddOption('Trakt.tv Watchlist',True,1139, 'watchlist', 'trakt', iconImage=art+'/watch/trakt_watchlist.jpg')
+	AddOption('Trakt.tv Trending',True,1139, 'trending', 'trakt', iconImage=art+'/watch/trakt_trending.jpg')
+	AddOption('Trakt.tv Recommended',True, 1139, 'recommended', 'trakt', iconImage=art+'/watch/trakt_recommended.jpg')
+	AddOption('Trakt.tv Personal Lists',True, 1139, 'custom', 'trakt', iconImage=art+'/watch/trakt_personal_lists.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVIMDBMenu():
-	AddOption('IMDB Watchlist',True,1149, 'watchlist', 'imdb', iconImage=art+'/imdbwatchlist.jpg')
-	AddOption('IMDB Popular TV',True,1149, 'popular', 'imdb', iconImage=art+'/imdbpopulartv.jpg')
+	AddOption('IMDB Watchlist',True,1149, 'watchlist', 'imdb', iconImage=art+'/watch/imdb_watchlist.jpg')
+	AddOption('IMDB Popular TV',True,1149, 'popular', 'imdb', iconImage=art+'/watch/imdb_popular_tv.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieMenu():
-	AddOption('Browse A-Z',True, 1210, iconImage=art+'/a-z.jpg')
-	AddOption('Browse Genres',True, 1220, iconImage=art+'/browsegenres.jpg')
-	AddOption('Trakt.TV',True, 1230, iconImage=art+'/trakt.jpg')
-	AddOption('IMDB',True, 1240, iconImage=art+'/imdb.jpg')
-	AddOption('Search',True, 1250, iconImage=art+'/search.jpg')
+	AddOption('Browse A-Z',True, 1210, iconImage=art+'/watch/a-z.jpg')
+	AddOption('Browse Genres',True, 1220, iconImage=art+'/watch/genre.jpg')
+	AddOption('Trakt.TV',True, 1230, iconImage=art+'/watch/trakt.jpg')
+	AddOption('IMDB',True, 1240, iconImage=art+'/watch/imdb.jpg')
+	AddOption('Search',True, 1250, iconImage=art+'/watch/search.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2202,64 +2203,65 @@ def WatchMovieGenreMenu():
 	rows = DB.query("SELECT distinct genre from rw_moviegenres ORDER BY genre ASC")
 	for row in rows:
 		genre = row[0].lower().replace('-', '')
-		if genre in ["japanese", 'none', "talkshow"]: genre = 'genre'
-		icon = path+ urllib.quote_plus(genre+'.jpg')
+		icon = path + urllib.quote_plus(genre+'.jpg')
+		if not os.path.exists(icon):	
+			icon = path + 'genre.jpg'
 		AddOption(row[0],True,1229, row[0],iconImage=icon)
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieTraktMenu():
-	AddOption('Trakt.tv Watchlist',True,1239, 'watchlist', 'trakt', iconImage=art+'/traktwatchlist.jpg')
-	AddOption('Trakt.tv Trending',True,1239, 'trending', 'trakt', iconImage=art+'/trakttrending.jpg')
-	AddOption('Trakt.tv Recommended',True, 1239, 'recommended', 'trakt', iconImage=art+'/traktrecommended.jpg')
-	AddOption('Trakt.tv Personal Lists',True, 1239, 'custom', 'trakt', iconImage=art+'/traktpersonallists.jpg')
-	AddOption('Trakt.tv Liked Lists',True, 1239, 'liked', 'trakt', iconImage=art+'/traktliked.jpg')
-	AddOption('Trakt.tv Popular Lists',True, 1239, 'popular', 'trakt', iconImage=art+'/traktpopular.jpg')
+	AddOption('Trakt.tv Watchlist',True,1239, 'watchlist', 'trakt', iconImage=art+'/watch/trakt_watchlist.jpg')
+	AddOption('Trakt.tv Trending',True,1239, 'trending', 'trakt', iconImage=art+'/watch/trakt_trending.jpg')
+	AddOption('Trakt.tv Recommended',True, 1239, 'recommended', 'trakt', iconImage=art+'/watch/trakt_recommended.jpg')
+	AddOption('Trakt.tv Personal Lists',True, 1239, 'custom', 'trakt', iconImage=art+'/watch/trakt_personal_lists.jpg')
+	AddOption('Trakt.tv Liked Lists',True, 1239, 'liked', 'trakt', iconImage=art+'/watch/trakt_liked.jpg')
+	AddOption('Trakt.tv Popular Lists',True, 1239, 'popular', 'trakt', iconImage=art+'/watch/trakt_popular.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMovieIMDBMenu():
-	AddOption('IMDB Watchlist',True,1249, 'watchlist', 'imdb', iconImage=art+'/imdbwatchlist.jpg')
-	AddOption('IMDB Top 250',True,1249, 'top250', 'imdb', iconImage=art+'/imdbtop250.jpg')
-	AddOption('IMDB MovieMeter',True,1249, 'moviemeter', 'imdb', iconImage=art+'/imdbmoviemeter.jpg')
-	AddOption('IMDB Best Picture Winners',True,1249, 'bestpictures', 'imdb', iconImage=art+'/imdbbestpicturewinners.jpg')
+	AddOption('IMDB Watchlist',True,1249, 'watchlist', 'imdb', iconImage=art+'/watch/imdb_watchlist.jpg')
+	AddOption('IMDB Top 250',True,1249, 'top250', 'imdb', iconImage=art+'/watch/imdb_top250.jpg')
+	AddOption('IMDB MovieMeter',True,1249, 'moviemeter', 'imdb', iconImage=art+'/watch/imdb_moviemeter.jpg')
+	AddOption('IMDB Best Picture Winners',True,1249, 'bestpictures', 'imdb', iconImage=art+'/watch/imdb_best_picture_winners.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ManageMenu():
-	AddOption('TV Shows',True, 2100, iconImage=art+'/tvshows.jpg')
-	AddOption('Movies',True, 2200, iconImage=art+'/movies.jpg')
-	AddOption('Walter Caching Service',True, 5000, iconImage=art+'/ws_management.jpg')
-	AddOption('Backup Database',False, 2300, iconImage=art+'/backup.jpg')
-	AddOption('Restore Database',False, 2400, iconImage=art+'/restore.jpg')
-	AddOption('Download Remote Update',False, 2410, iconImage=art+'/restore.jpg')
+	AddOption('TV Shows',True, 2100, iconImage=art+'/manage/tvshows.jpg')
+	AddOption('Movies',True, 2200, iconImage=art+'/manage/movies.jpg')
+	AddOption('Walter Caching Service',True, 5000, iconImage=art+'/manage/walter.jpg')
+	AddOption('Backup Database',False, 2300, iconImage=art+'/manage/backup.jpg')
+	AddOption('Restore Database',False, 2400, iconImage=art+'/manage/restore.jpg')
+	AddOption('Download Remote Update',False, 2410, iconImage=art+'/manage/restore.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ManageTVMenu():
-	AddOption('View TV Subscriptions',True, 2110, iconImage=art+'/watchsubscriptions.jpg')
-	AddOption('Subscribe to TV Shows',True, 1100, iconImage=art+'/subscribe.jpg')
-	AddOption('Update TV Show Subscriptions',False, 2130, iconImage=art+'/updatesubscriptions.jpg')	
-	AddOption('Cache Available TV Shows',False, 2140, iconImage=art+'/cacheavailabletvshows.jpg')	
-	AddOption('Delete All Subscriptions',False, 2150, iconImage=art+'/deleteallsubscriptions.jpg')
+	AddOption('View TV Subscriptions',True, 2110, iconImage=art+'/manage/view_subscriptions.jpg')
+	AddOption('Subscribe to TV Shows',True, 1100, iconImage=art+'/manage/subscribe.jpg')
+	AddOption('Update TV Show Subscriptions',False, 2130, iconImage=art+'/manage/update_subscriptions.jpg')	
+	AddOption('Cache Available TV Shows',False, 2140, iconImage=art+'/manage/cache_available_tvshows.jpg')	
+	AddOption('Delete All Subscriptions',False, 2150, iconImage=art+'/manage/delete_all_subscriptions.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
 def ManageMovieMenu():
-	AddOption('Cache Available Movies',False, 2150, iconImage=art+'/cacheavalaiblemovies.jpg')
-	AddOption('Add Movies to Library',True, 1200, iconImage=art+'/addmoviestolibrary.jpg')
+	AddOption('Cache Available Movies',False, 2150, iconImage=art+'/manage/cache_available_movies.jpg')
+	AddOption('Add Movies to Library',True, 1200, iconImage=art+'/manage/add_movies.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
 def SupportMenu():
-	AddOption('View Welcome',False, 3600, iconImage=art+'/faq.jpg')
-	AddOption('View Status',False, 3100, iconImage=art+'/viewstatus.jpg')
-	AddOption('FAQ',True, 3200, iconImage=art+'/faq.jpg')
-	AddOption('View XMBC.log',False, 3300, iconImage=art+'/log.jpg')
-	AddOption('Submit log to xbmclogs',False, 3400, iconImage=art+'/submitlog.jpg')
-	AddOption('Watch a demo',False, 3500, iconImage=art+'/watch.jpg')
+	AddOption('View Welcome',False, 3600, iconImage=art+'/support/welcome.jpg')
+	AddOption('View Status',False, 3100, iconImage=art+'/support/view_status.jpg')
+	AddOption('FAQ',True, 3200, iconImage=art+'/support/faq.jpg')
+	AddOption('View XMBC.log',False, 3300, iconImage=art+'/support/log.jpg')
+	AddOption('Submit log to xbmclogs',False, 3400, iconImage=art+'/support/submit_log.jpg')
+	AddOption('Watch a demo',False, 3500, iconImage=art+'/support/watch_demos.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2273,28 +2275,28 @@ def FAQMenu():
 	for heading in headings:
 		title = heading['title']
 		id = heading['id']
-		AddOption(title, False, 3210, id, iconImage=art+'/faq.jpg')
+		AddOption(title, False, 3210, id, iconImage=art+'/support/faq.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
 def SettingsMenu():
-	AddOption('The Royal We Settings',False, 4100, iconImage=art+'/theroyalwesttings.jpg')
-	AddOption('Donnie Settings',False, 4200, iconImage=art+'/donniesettings.jpg')
-	AddOption('Walter Settings',False, 4700, iconImage=art+'/ws_settings.jpg')
-	AddOption('Service Providers',True, 4300, iconImage=art+'/serviceproviders.jpg')
-	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/urlresolversettings.jpg')
-	AddOption('Metahandler Settings',False, 4410, iconImage=art+'/urlresolversettings.jpg')
-	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/cleardatabaselock.jpg')
-	AddOption('Install TRW to source.xml',False, 4600, iconImage=art+'/addtrwtosource.jpg')
-	AddOption('Install Recently Aired SmartList',False, 4800, iconImage=art+'/addtrwtosource.jpg')
+	AddOption('The Royal We Settings',False, 4100, iconImage=art+'/settings/the_royal_we.jpg')
+	AddOption('Donnie Settings',False, 4200, iconImage=art+'/settings/donnie.jpg')
+	AddOption('Walter Settings',False, 4700, iconImage=art+'/settings/walter.jpg')
+	AddOption('Service Providers',True, 4300, iconImage=art+'/settings/service_providers.jpg')
+	AddOption('URLResolver Settings',False, 4400, iconImage=art+'/settings/urlresolver.jpg')
+	AddOption('Metahandler Settings',False, 4410, iconImage=art+'/settings/metahandlers.jpg')
+	AddOption('Clear Database Lock',False, 4500, iconImage=art+'/settings/clear_database_lock.jpg')
+	AddOption('Install TRW to source.xml',False, 4600, iconImage=art+'/settings/add_sources.jpg')
+	AddOption('Install Recently Aired SmartList',False, 4800, iconImage=art+'/settings/install_smartlist.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def ProviderMenu():
 	log("Listing service providers")
-	AddOption("Modify Priorites", True, 4310, iconImage=art+'/serviceproviders.jpg')
-	AddOption("Reset Priorites", True, 4350, iconImage=art+'/reset.jpg')
+	AddOption("Modify Priorites", True, 4310, iconImage=art+'/settings/modify_priorities.jpg')
+	AddOption("Reset Priorites", True, 4350, iconImage=art+'/settings/reset.jpg')
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	for index in range(0, len(SCR.activeScrapers)):
 		commands = []
@@ -2307,7 +2309,7 @@ def ProviderMenu():
 		commands.append(('Update Episodes', cmd, ''))
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 4311, service, 'movies')			
 		commands.append(('Update Movies', cmd, ''))
-		AddOption(SCR.getScraperByIndex(index).name, True, 4320, SCR.getScraperByIndex(index).service, iconImage=art+'/'+service+'.jpg', contextMenuItems=commands)
+		AddOption(SCR.getScraperByIndex(index).name, True, 4320, SCR.getScraperByIndex(index).service, iconImage=art+'/providers/'+service+'.jpg', contextMenuItems=commands)
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2337,10 +2339,10 @@ def ListProviders():
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WalterMenu():
-	AddOption('Walter Status', False, 5100,iconImage=art+'/view-status.jpg')
-	AddOption('Walter Queue', True, 5200, iconImage=art+'/queue_manager.jpg')
-	AddOption('Cached Movies', True, 5400, iconImage=art+'/movies.jpg')
-	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/tvshows.jpg')
+	AddOption('Walter Status', False, 5100,iconImage=art+'/manage/walter_status.jpg')
+	AddOption('Walter Queue', True, 5200, iconImage=art+'/manage/walter_queue_manager.jpg')
+	AddOption('Cached Movies', True, 5400, iconImage=art+'/manage/movies.jpg')
+	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/manage/tvshows.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2359,8 +2361,8 @@ def DeleteCachedFile(media, filename):
 		xbmc.executebuiltin("Container.Refresh")
 
 def WatchCachedMenu():
-	AddOption('Cached Movies', True, 5400, iconImage=art+'/movies.jpg')
-	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/tvshows.jpg')
+	AddOption('Cached Movies', True, 5400, iconImage=art+'/watch/movies.jpg')
+	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/watch/tvshows.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2437,7 +2439,7 @@ def ViewWalterQueue():
 		commands.append(('Clear All Completed', cmd, ''))
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5290, '', '')			
 		commands.append(('Clear All Failed', cmd, ''))
-		iconImage=art+'/%s.jpg' % icon
+		iconImage=art+'/manage/%s.jpg' % icon
 		AddOption(name,False, 5300, str(item[0]), contextMenuItems=commands, iconImage=iconImage)
 	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
