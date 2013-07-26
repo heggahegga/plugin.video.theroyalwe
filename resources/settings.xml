@@ -68,10 +68,10 @@
 	<category label="Misc">
 		<setting id="enable-default-views" type="bool" label="Enable Default Views" default="false"/>
 		<setting id="default-folder-view" type="number" label="    Folders" default="503"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="default-tvshow-view" type="number" label="    TV Shows" default="503"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="default-season-view" type="number" label="    Seasons" default="503"  visible="!eq(-2,false)" enable="!eq(-2,false)"/>
-		<setting id="default-episode-view" type="number" label="    Episodes" default="503"  visible="!eq(-3,false)" enable="!eq(-2,false)"/>
-		<setting id="default-movie-view" type="number" label="    Movies" default="503"  visible="!eq(-4,false)" enable="!eq(-2,false)"/>
+		<setting id="default-tvshow-view" type="number" label="    TV Shows" default="503"  visible="!eq(-2,false)" enable="!eq(-1,false)"/>
+		<setting id="default-season-view" type="number" label="    Seasons" default="503"  visible="!eq(-3,false)" enable="!eq(-2,false)"/>
+		<setting id="default-episode-view" type="number" label="    Episodes" default="503"  visible="!eq(-4,false)" enable="!eq(-2,false)"/>
+		<setting id="default-movie-view" type="number" label="    Movies" default="503"  visible="!eq(-5,false)" enable="!eq(-2,false)"/>
 		<setting id="highlight-colors" type="bool" label="Change Default Highlight Colors" default="false"/>
 		<setting id="hightlight-filesize" type="enum" values="Blue|Green|Red|Yellow|White" label="    File Size" default="0" enable="!eq(-1,false)"/>
 		<setting id="hightlight-enabled" type="enum" values="Blue|Green|Red|Yellow|White" label="    Enabled Item" default="4" enable="!eq(-2,false)"/>

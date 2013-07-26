@@ -89,7 +89,20 @@ RECENTLY_AIRED_PATH = os.path.join(xbmc.translatePath('special://profile'), 'pla
 EXCLUDE_PROBLEM_EPISODES = True
 AZ_DIRECTORIES = ['#1234', 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y', 'Z']
 
+if reg.getBoolSetting('cache_temp_custom_directory'):
+	CACHE_ROOT = reg.getBoolSetting('cache_temp_directory')
+else:
+	CACHE_ROOT = os.path.join(xbmc.translatePath('special://profile' + '/addon_data/script.module.walter/cached'), '')
 
+if reg.getBoolSetting('cache_movie_custom_directory'):
+	CACHED_MOVIE_ROOT = reg.getSetting('cache_movie_directory')
+else:
+	CACHED_MOVIE_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + '/movies'), '')
+
+if reg.getBoolSetting('cache_tvshow_custom_directory'):
+	CACHED_TVSHOW_ROOT = reg.getSetting('cache_tvshow_directory')
+else:
+	CACHED_TVSHOW_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + '/tvshows'), '')
 
 ############################
 ### Database		 ###
@@ -214,9 +227,10 @@ class TextBox:
 
 
 
-def showWelcome():
-	path = os.path.join(xbmc.translatePath(DATA_PATH + '/resources'), 'welcome.html')
+def showWelcome(version):
+	path = os.path.join(xbmc.translatePath(rootpath + '/resources'), 'welcome.html')
 	text = readfile(path)
+	text = 'The Royal We has been updated to version %s.\n\n%s' % (version, text) 
 	TextBox().show('Welcome new user!', text)
 
 def removeYear(s, regex='( \(\d{4}\))$'):
@@ -435,23 +449,41 @@ def _pbhook(numblocks, blocksize, filesize, dp, start_time):
 def checkUpgradeStatus():
 	log('Verifying Upgrade Status')
 	status = reg.getSetting('upgrade-status')
-	if status < VERSION:
-		
+	#print status
+	#print VERSION
+	#print checkVersions(status, VERSION)
+	if checkVersions(status, VERSION):
 		dialog = xbmcgui.Dialog()
 		dialog.ok('TRW Version Update!', 'Make sure the database settings are correct.')
 		xbmcaddon.Addon(id='script.module.donnie').openSettings()
-		
+	
 		msg = 'TRW needs to update your database!'
 		msg2 = "This will take some time depending depending on the size."
 		msg3 = "Do you wish to backup first?"
 		if dialog.yesno(msg, msg2, msg3):
 			BackupDatabase()
-		
+	
 		if not dialog.yesno('Ready to proceed?', "It's not too late to cancel."): 
 			sys_exit()
 			return
 		ExecuteUpgrade()
-		showWelcome()
+		showWelcome(VERSION)
+
+def checkVersions(previous, current):
+	p = previous.split('.')
+	c = current.split('.')
+	# test major version
+	if int(p[0]) < int(c[0]): return True
+	
+	# test minor version
+	if int(p[1]) < int(c[1]): return True
+
+	# test sub minor version
+	if int(p[2]) < int(c[2]): return True
+
+	return False	
+
+	
 
 def ExecuteUpgrade():
 	DB.connect()
@@ -472,6 +504,11 @@ def ExecuteUpgrade():
 		status = "%s of %s" % (rows.index(row), len(rows))
 		pDialog.update(percent, status, '')
 		imdb = SCR.resolveIMDB(showid=row[0])
+	if DB_TYPE == 'mysql':
+		DB.execute("DELETE FROM rw_episodelinks WHERE url regexp '^http://'")
+	else:
+		DB.execute("DELETE FROM rw_episodelinks WHERE url LIKE 'http://'")
+	DB.commit()
 
 	msg = 'Upgrade Complete!'
 	msg2 = "For questions, support or feeback go to:"
@@ -908,7 +945,7 @@ def StreamSource(name,url, media=None, idFile=None):
 		Notify("Streaming failed", "Streaming failed")
 		return False
 
-def WatchStreamSource(name,url, idFile=None, metadata=None):
+def WatchStreamSource(name, url, idFile=None, metadata=None):
 	global STREAM_SELECTION
 	log('Attempting to stream url: %s' % str(name))	
 	thumb = ''
@@ -922,14 +959,26 @@ def WatchStreamSource(name,url, idFile=None, metadata=None):
 		'icon': icon,
 		'thumb': thumb
 	}
-	#try:
+	try:
+		from walter.streaming import StreamClass
+		S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
+		return True
+	except:
+		log('Streaming failed to launch, no response from server')
+		Notify("Streaming failed", "Streaming failed")
+		return False
+
+def WatchURL(name, url):
+	infoLabels = {
+		'Title': name,
+		'Genre': '',
+		'plotoutline': '', 
+		'plot': '',
+		'icon': '',
+		'thumb': ''
+	}
 	from walter.streaming import StreamClass
 	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
-	return True
-	#except:
-	#	log('Streaming failed to launch, no response from server')
-	#	Notify("Streaming failed", "Streaming failed")
-	#	return False
 
 def playYouTube(vid):
 	url = 'plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vid
@@ -2076,9 +2125,10 @@ def AddonMenu():  #homescreen
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchMenu():
+	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
 	AddOption('TV Shows',True, 1100, iconImage=art+'/tvshows.jpg')
 	AddOption('Movies',True, 1200, iconImage=art+'/movies.jpg')
-	AddOption('New Episodes',True, 1160, iconImage=art+'/newestepisodes.jpg')
+	AddOption('Cached',True, 5480)
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2297,32 +2347,56 @@ def WalterMenu():
 def DeleteCachedFile(media, filename):
 	print media
 	print filename
+	if media == 'movie':
+		path = os.path.join(xbmc.translatePath(CACHED_MOVIE_ROOT), filename)
+	if media == 'tvshow':
+		path = os.path.join(xbmc.translatePath(CACHED_TVSHOW_ROOT), filename)
+	msg = '***Confirm file deteltion***'
+	msg2 = 'Are you sure?'
+	dialog = xbmcgui.Dialog()
+	if dialog.yesno(msg, msg2, path):
+		os.remove(path)
+		xbmc.executebuiltin("Container.Refresh")
+
+def WatchCachedMenu():
+	AddOption('Cached Movies', True, 5400, iconImage=art+'/movies.jpg')
+	AddOption('Cached TV Shows', True, 5410, iconImage=art+'/tvshows.jpg')
+	setView('default-folder-view')
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def CachedMovies():
-	if reg.getBoolSetting('cache_movie_custom_directory'):
-		movie_root = reg.getSetting('cache_movie_directory')
-	else:
-		movie_root = os.path.join(xbmc.translatePath(self.cache_root + '/movies'), '')
-
 	try:
- 		movies = os.listdir(movie_root)
+ 		movies = os.listdir(CACHED_MOVIE_ROOT)
 		for movie in movies:
 			commands = []
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'movie', movie)			
-			commands.append(('Delete', cmd, ''))
-			AddOption(movie, False, 5100,contextMenuItems=commands)
+			commands.append(('Delete Movie', cmd, ''))
+			url = xbmcpath(CACHED_MOVIE_ROOT, movie)
+			AddOption(movie, False, 70, movie, url, contextMenuItems=commands)
 		
 
 	except Exception as e:
-    		log('Cached File Error %s' %s)
+    		log('Cached File Error %s' % e)
 	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
-def CachedTVShows():
-	if reg.getBoolSetting('cache_tvshow_custom_directory'):
-		tvshow_root = reg.getSetting('cache_tvshow_directory')
-	else:
-		tvshow_root = os.path.join(xbmc.translatePath(self.cache_root + '/tvshows'), '')
+def CachedTVShows(tvshow=''):
+	try:
+ 		tvshows = os.listdir(CACHED_TVSHOW_ROOT)
+		for tvshow in tvshows:
+			url = xbmcpath(CACHED_TVSHOW_ROOT, tvshow)
+			if os.path.isdir(url):
+				commands = []
+				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'folder', tvshow)			
+				commands.append(('Delete Folder', cmd, ''))
+				AddOption(tvshow, False, 5410, tvshow, contextMenuItems=commands)
+			else:
+				commands = []
+				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'tvshow', tvshow)			
+				commands.append(('Delete TV Show', cmd, ''))
+				AddOption(tvshow, False, 70, tvshow, url, contextMenuItems=commands)
+	except Exception as e:
+    		log('Cached File Error %s' % e)
 	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2335,28 +2409,29 @@ def ViewWalterQueue():
 			media = 'TV'
 		else:
 			media = 'MV'
-
-		if item[6] == 1:
+		status = int(item[7])
+		if status == 1:
 			name = "%s - [B][COLOR %s]%s[/COLOR][/B]" % (media,'green', item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5210, item[0], item[2])			
 			commands.append(('Cancle', cmd, ''))
 			icon = 'caching'
-		elif item[6] == 3:
-			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'red', item[2])
-			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5260, item[0], '')			
-			commands.append(('Re-add to queue', cmd, ''))
-			icon = 'failed'
-		elif item[6] == 2:
-			name = "%s - %s" % (media, item[2])
-			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5270, item[0], '')			
-			commands.append(('Remove from queue', cmd, ''))
-			icon = 'completed'
-		else:
+		elif status == 0:
 			
 			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'yellow', item[2])
 			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5230, item[0], item[2])			
 			commands.append(('Remove from pending', cmd, ''))
 			icon = 'pending'
+
+		elif status == 2:
+			name = "%s - %s" % (media, item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5270, item[0], '')			
+			commands.append(('Remove from queue', cmd, ''))
+			icon = 'completed'
+		else:
+			name = "%s - [COLOR %s]%s[/COLOR]" % (media, 'red', item[2])
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5260, item[0], '')			
+			commands.append(('Re-add to queue', cmd, ''))
+			icon = 'failed'
 
 		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5280, '', '')			
 		commands.append(('Clear All Completed', cmd, ''))
@@ -2638,8 +2713,8 @@ elif mode==60:
 	log('Watch Episode')
 	WatchEpisode(name, action)
 elif mode==70:
-	log('Watch url: %s', name)
-	WatchURL(name)
+	log('Watch url: %s', action)
+	WatchURL(name, action)
 elif mode==100:
 	log('Autoupdate Subscriptions')
 	AutoUpdateSubscriptions()
@@ -2988,7 +3063,10 @@ elif mode==5400:
 
 elif mode==5410:
 	log('Cached TV Shows')
-	CachedTVShows()
+	CachedTVShows(name)
+elif mode==5480:
+	log('Watch Cached Menu')
+	WatchCachedMenu()
 
 elif mode==5490:
 	log('Delete cached file')

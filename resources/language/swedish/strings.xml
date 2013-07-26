@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <strings>
-  <!-- Providers -->
+	<!-- Providers -->
 	<string id="30100">Aktivera Icefilms</string>
 	<string id="30101">     Icefilms URL</string>
 	<string id="30102">Aktivera 1Channel</string>
