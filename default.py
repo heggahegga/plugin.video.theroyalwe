@@ -451,7 +451,7 @@ def checkUpgradeStatus():
 	status = reg.getSetting('upgrade-status')
 	#print status
 	#print VERSION
-	#print checkVersions(status, VERSION)
+
 	if checkVersions(status, VERSION):
 		dialog = xbmcgui.Dialog()
 		dialog.ok('TRW Version Update!', 'Make sure the database settings are correct.')
@@ -470,8 +470,9 @@ def checkUpgradeStatus():
 		showWelcome(VERSION)
 
 def checkVersions(previous, current):
+	if not re.search('\d+\.\d+\.\d+', previous): return True
 	p = previous.split('.')
-	c = current.split('.')
+	c = current.split('.')	
 	# test major version
 	if int(p[0]) < int(c[0]): return True
 	

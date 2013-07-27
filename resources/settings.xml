@@ -7,7 +7,7 @@
 		<setting id="enable-mirror-caching" type="bool" label="Enable mirror caching" default="false"/>
 		<setting id="mirror-cache-limit" type="number" label="    Cached mirrors expire in (Hours)" default="1"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-metadata" type="bool" label="Enable MetaData" default="false"/>
-		<setting id="upgrade-status" type="number" visible="false" default="0"/>
+		<setting id="upgrade-status" type="number" visible="false" default="0.0.1"/>
 		<setting id="download-status" type="number" visible="false" default="0"/>
 		<setting id="machine-id" type="string" visible="false" default=""/>
 		<setting id="last-path" type="string" visible="false" default="0"/>
