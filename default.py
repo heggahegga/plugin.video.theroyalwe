@@ -1908,7 +1908,7 @@ def WatchTVNewReleases(provider=None):
 		providers = ['icefilms', '1channel', 'tubeplus', 'watchseries']
 		for provider in providers:
 			if reg.getBoolSetting('enable-' + provider):
-				AddOption(provider, True, 1160, provider, iconImage=art+'/'+provider+'.jpg')
+				AddOption(provider, True, 1160, provider, iconImage=art+'/providers/'+provider+'.jpg')
 		setView('default-folder-view')
 		xbmcplugin.endOfDirectory(int(sys.argv[1]))
 		return
@@ -1920,6 +1920,7 @@ def WatchTVNewReleases(provider=None):
 	for episode in episodes:
 		commands = []
 		t = None
+		USE_META = False
 		try:
 			if USE_META:
 				temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
