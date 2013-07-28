@@ -1,4 +1,6 @@
 *~
+*.bak
+Thumbs.db
 *.py[cod]
 
 # C extensions
