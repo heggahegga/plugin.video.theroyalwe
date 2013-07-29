@@ -20,7 +20,9 @@
     </extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>Integrate streaming content into the library</summary>
-        <description>Turns your XBMC into an instant free on-demand media-center. Browse the play movies and series found on multiple sites directly from your library. Currently supports icefilms.com, 1channel.ch with more to come.</description>
+        <summary lang="en">Integrate streaming content into the library</summary>
+		<summary lang="sv">Integrera streamat innehåll i videobiblioteket</summary>
+        <description lang="en">Turns your XBMC into an instant free on-demand media-center. Browse the play movies and series found on multiple sites directly from your library. Currently supports icefilms.com, 1channel.ch with more to come.</description>
+		<description lang="sv">Förvandlar ditt XBMC-bibliotek till en gratis vod-tjänst. Bläddra bland filmer och tv-serier från olika videosajter (icefilms.com, 1channel.ch, furk.net m.m) inifrån XBMCs egna videobibliotek.</description>
     </extension>
 </addon>
