@@ -92,17 +92,17 @@ AZ_DIRECTORIES = ['#1234', 'A','B','C','D','E','F','G','H','I','J','K','L','M','
 if reg.getBoolSetting('cache_temp_custom_directory'):
 	CACHE_ROOT = reg.getBoolSetting('cache_temp_directory')
 else:
-	CACHE_ROOT = os.path.join(xbmc.translatePath('special://profile' + '/addon_data/script.module.walter/cached'), '')
+	CACHE_ROOT = os.path.join(xbmc.translatePath('special://profile' + '/addon_data/script.module.walter/cache'), '')
 
 if reg.getBoolSetting('cache_movie_custom_directory'):
 	CACHED_MOVIE_ROOT = reg.getSetting('cache_movie_directory')
 else:
-	CACHED_MOVIE_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + '/movies'), '')
+	CACHED_MOVIE_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + 'movies'), '')
 
 if reg.getBoolSetting('cache_tvshow_custom_directory'):
 	CACHED_TVSHOW_ROOT = reg.getSetting('cache_tvshow_directory')
 else:
-	CACHED_TVSHOW_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + '/tvshows'), '')
+	CACHED_TVSHOW_ROOT = os.path.join(xbmc.translatePath(CACHE_ROOT + 'tvshows'), '')
 
 ############################
 ### Database		 ###
@@ -2386,15 +2386,22 @@ def CachedMovies():
 
 def CachedTVShows(tvshow=''):
 	try:
- 		tvshows = os.listdir(CACHED_TVSHOW_ROOT)
+		if tvshow:
+			path = xbmcpath(CACHED_TVSHOW_ROOT, tvshow)
+		else:
+			path = CACHED_TVSHOW_ROOT
+ 		tvshows = os.listdir(path)
 		for tvshow in tvshows:
-			url = xbmcpath(CACHED_TVSHOW_ROOT, tvshow)
+			url = xbmcpath(path, tvshow)
 			if os.path.isdir(url):
+				log('Listing folder: %s' % tvshow)
 				commands = []
 				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'folder', tvshow)			
 				commands.append(('Delete Folder', cmd, ''))
-				AddOption(tvshow, False, 5410, tvshow, contextMenuItems=commands)
+				AddOption(tvshow, True, 5410, tvshow, contextMenuItems=commands)
 			else:
+				print url
+				log('Listing file: %s' % tvshow)
 				commands = []
 				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'tvshow', tvshow)			
 				commands.append(('Delete TV Show', cmd, ''))
