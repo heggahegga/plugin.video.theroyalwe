@@ -7,7 +7,8 @@
         <import addon="script.module.beautifulsoup"/>
 	<import addon="service.theroyalwe.autoupdater" version="0.1.0"/>
 	<import addon="script.xbmc.debug.log" version="12.0.0"/>
-	<import addon="script.module.donnie" version="0.1.5"/>
+	<import addon="script.module.donnie" version="0.4.0"/>
+	<import addon="script.module.walter" version="0.1.0"/>
         <import addon="script.module.metahandler" version="1.0.0"/>
         <import addon="script.module.t0mm0.common" version="1.1.0"/>
 	<import addon="script.module.myconnpy"     version="0.3.2"/>
