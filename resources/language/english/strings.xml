@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <strings>
+	<!-- General -->
+	<string id="30001">Enable silent updates</string>
+	<string id="30002">Enable link ranking</string>
+	<string id="30003">    Enable autoplay</string>
+	<string id="30004">Prefer HD links</string>
+	<string id="30005">Enable mirror caching</string>
+	<string id="30006">    Cached mirrors expire in (Hours)</string>
+	<string id="30007">Enable MetaData</string>
+	<!-- Support -->
+	<string id="30008">Logging Level</string>
 	<!-- Providers -->
+	<string id="30009">Enable provider filtering</string>
 	<string id="30100">Enable Icefilms</string>
 	<string id="30101">     Base URL</string>
 	<string id="30102">Enable 1Channel</string>
@@ -15,34 +26,14 @@
 	<string id="30111">Enable TubePlus</string>
 	<string id="30112">Enable WatchSeries</string>
 	<string id="30113">Enable SimplyMovies</string>
-	<!-- Accounts -->
-	<string id="30200">Hide successful login nofifications</string>
-	<string id="30201">    Username</string>
-	<string id="30202">    Password</string>
-	<string id="30203">    Real-Debrid</string>
-	<string id="30204">    Movreel</string>
-
-	<string id="30205">URL Resolver</string>
-	<string id="30206">WarezTuga Username</string>
-	<string id="30207">WarezTuga Password</string>
-	<string id="30208">Furk Username</string>
-	<string id="30209">Furk Password</string>
-	<!-- Database -->
-	<string id="30500">Use SQLite Database</string>
-	<string id="30501">Use MySQL Database</string>
-	<string id="30502">    MySQL Host</string>
-	<string id="30503">    Database VideoLibrary Name</string>
-	<string id="30504">    Username</string>
-	<string id="30505">    Password</string>
-	<string id="30506">    SQLite VideoLibrary Name</string>
 	<!-- Directories -->
+	<string id="30010">Create Movie Subfolders</string>
 	<string id="30300">Use custom directory</string>
 	<string id="30301">    Movie directory</string>	
 	<string id="30400">Use custom directory</string>
 	<string id="30401">    TV show directory</string>	
 	<string id="30402">    Download directory</string>
-
-	<!-- Automatic Update -->
+	<!-- AutoUpdater -->
 	<string id="30600">Enable Automatic Updates</string>
 	<string id="30601">    Get new episodes from subscribed TV shows</string>
 	<string id="30602">    Cache Mirrors from subscribed TV shows</string>
@@ -53,4 +44,15 @@
 	<string id="30607">    Update Interval</string>
 	<string id="30608">Enable Automatic Backups</string>
 	<string id="30609">    Backup Interval</string>
+	<!-- Misc -->
+	<string id="30700">Enable Default Views</string>
+	<string id="30701">    Folders</string>
+	<string id="30702">    TV Shows</string>
+	<string id="30703">    Seasons</string>
+	<string id="30704">    Episodes</string>
+	<string id="30705">    Movies</string>
+	<string id="30706">Change Default Highlight Colors</string>
+	<string id="30707">    File Size</string>
+	<string id="30708">    Enabled Item</string>
+	<string id="30709">    Disabled Item</string>	
 </strings>
