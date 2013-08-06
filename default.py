@@ -969,7 +969,7 @@ def WatchStreamSource(name, url, idFile=None, metadata=None):
 		Notify("Streaming failed", "Streaming failed")
 		return False
 
-def WatchURL(name, url):
+def WatchURL(name, url, furk=False):
 	infoLabels = {
 		'Title': name,
 		'Genre': '',
@@ -978,6 +978,13 @@ def WatchURL(name, url):
 		'icon': '',
 		'thumb': ''
 	}
+
+	if furk:
+		SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+		Furk = SCR.getScraperByName('furk')
+		stream = 'furk://%s' % url
+		url = Furk._resolveStream(stream)
+
 	from walter.streaming import StreamClass
 	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
 
@@ -1450,6 +1457,29 @@ def ViewFAQ(id):
 	text = heading.string
 	TB = TextBox()
 	TB.show(title, text)
+
+def WatchFurkFiles():
+	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+	Furk = SCR.getScraperByName('furk')
+	files = Furk.getMyFiles()
+	for f in files:
+		commands = []
+		name = f['name']
+		AddOption(name, True, 1390, name, f['id'], contextMenuItems=commands)
+	
+	setView('custom', viewid=50)
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def WatchFurkSearch():
+	q = DoSearch('Search Furk.net')
+	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
+	Furk = SCR.getScraperByName('furk')
+	files = Furk.search(q)
+	for f in files:
+		commands = []
+		AddOption(f[0], True, 1390, f[0], f[1], contextMenuItems=commands)
+	setView('custom', viewid=50)
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WatchTVResults(name, action):
 	log('Listing TV by: %s, %s' % (action, name))
@@ -2131,6 +2161,13 @@ def WatchMenu():
 	AddOption('TV Shows',True, 1100, iconImage=art+'/watch/tvshows.jpg')
 	AddOption('Movies',True, 1200, iconImage=art+'/watch/movies.jpg')
 	AddOption('Cached',True, 5480, iconImage=art+'/watch/cached.jpg')
+	AddOption('Furk.net',True, 1300, iconImage=art+'/providers/furk.jpg')
+	setView('default-folder-view')
+	xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+def WatchFurkMenu():
+	AddOption('Furk - My Files',True, 1310, iconImage=art+'/watch/furk_files.jpg')
+	AddOption('Search Furk',True, 1320, iconImage=art+'/watch/search.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -2903,6 +2940,18 @@ elif mode==1259:
 	log('Watch Search Movie Results')
 	WatchMovieResults(name, 'search')
 
+elif mode==1300:
+	log('Watch Furk Menu')
+	WatchFurkMenu()
+elif mode==1310:
+	log('Watch Furk Files')
+	WatchFurkFiles()
+elif mode==1320:
+	log('Watch Furk Search')
+	WatchFurkSearch()
+elif mode==1390:
+	log('Watch Furk: %s' % name)
+	WatchURL(name, action, furk=True)
 
 elif mode==2000:
 	log('Manage Menu')
