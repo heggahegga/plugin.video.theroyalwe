@@ -33,7 +33,7 @@
 		<setting id="enable-watchseries" type="bool" label="30112" default="false"/>
 		<setting id="watchseries-base-url" type="text" label="30101" default="watchseries.lt" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="enable-wareztuga" type="bool" label="30106" default="false"/>
-		<setting id="wareztuga-base-url" type="text" label="30101" default="wareztuga.me" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="wareztuga-base-url" type="text" label="30101" default="wareztuga.tv" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		
 		<setting id="enable-vidics" type="bool" label="30108" default="false"/>
 		<setting id="vidics-base-url" type="text" label="30101" default="vidics.ch" visible="!eq(-1,false)" enable="!eq(-1,false)"/>
@@ -62,19 +62,19 @@
 		<setting id="update_moviecache_timer" type="enum" values="1d|2d|5d|1w" label="30607" default="0" enable="!eq(-1,false)"/>
 		<setting id="update_library" type="bool" label="30605" default="false" enable="!eq(-8,false)"/>
 		<setting id="update_artwork" type="bool" label="30606" default="false" enable="!eq(-9,false)"/>
-		<setting id="auto_backup" type="bool" label="30608" default="false"/>
-		<setting id="backup_timer" type="enum" values="1d|2d|5d|1w" label="30609" default="0" enable="!eq(-1,false)"/>
+		<!--<setting id="auto_backup" type="bool" label="30608" default="false"/>
+		<setting id="backup_timer" type="enum" values="1d|2d|5d|1w" label="30609" default="0" enable="!eq(-1,false)"/>-->
 	</category>
 	<category label="Misc">
 		<setting id="enable-default-views" type="bool" label="30700" default="false"/>
-		<setting id="default-folder-view" type="number" label="30701" default="503"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
-		<setting id="default-tvshow-view" type="number" label="30702" default="503"  visible="!eq(-2,false)" enable="!eq(-1,false)"/>
-		<setting id="default-season-view" type="number" label="30703" default="503"  visible="!eq(-3,false)" enable="!eq(-2,false)"/>
-		<setting id="default-episode-view" type="number" label="30704" default="503"  visible="!eq(-4,false)" enable="!eq(-2,false)"/>
-		<setting id="default-movie-view" type="number" label="30705" default="503"  visible="!eq(-5,false)" enable="!eq(-2,false)"/>
-		<setting id="highlight-colors" type="bool" label="30706" default="false"/>
+		<setting id="default-folder-view" type="number" label="30701" default="500"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
+		<setting id="default-tvshow-view" type="number" label="30702" default="515"  visible="!eq(-2,false)" enable="!eq(-1,false)"/>
+		<setting id="default-season-view" type="number" label="30703" default="50"  visible="!eq(-3,false)" enable="!eq(-2,false)"/>
+		<setting id="default-episode-view" type="number" label="30704" default="515"  visible="!eq(-4,false)" enable="!eq(-2,false)"/>
+		<setting id="default-movie-view" type="number" label="30705" default="515"  visible="!eq(-5,false)" enable="!eq(-2,false)"/>
+		<!--<setting id="highlight-colors" type="bool" label="30706" default="false"/>
 		<setting id="hightlight-filesize" type="enum" values="Blue|Green|Red|Yellow|White" label="30707" default="0" enable="!eq(-1,false)"/>
 		<setting id="hightlight-enabled" type="enum" values="Blue|Green|Red|Yellow|White" label="30708" default="4" enable="!eq(-2,false)"/>
-		<setting id="hightlight-disabled" type="enum" values="Blue|Green|Red|Yellow|White" label="30709" default="2" enable="!eq(-3,false)"/>
+		<setting id="hightlight-disabled" type="enum" values="Blue|Green|Red|Yellow|White" label="30709" default="2" enable="!eq(-3,false)"/>-->
 	</category>
 </settings>
