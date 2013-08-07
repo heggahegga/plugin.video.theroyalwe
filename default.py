@@ -228,8 +228,10 @@ class TextBox:
 
 
 def showWelcome(version):
+	changelog = readfile(os.path.join(xbmc.translatePath(rootpath), 'changelog.txt'))
 	path = os.path.join(xbmc.translatePath(rootpath + '/resources'), 'welcome.html')
 	text = readfile(path)
+	text += '\n[COLOR red][B]Changelog[/B][/COLOR]\n\n' + changelog
 	text = 'The Royal We has been updated to version %s.\n\n%s' % (version, text) 
 	TextBox().show('Welcome new user!', text)
 
@@ -3034,7 +3036,7 @@ elif mode==3500:
 	playYouTube('q7-nkCk5q3s')	
 elif mode==3600:
 	log('Show Welcome')
-	showWelcome()		
+	showWelcome(VERSION)		
 
 
 elif mode==4000:
