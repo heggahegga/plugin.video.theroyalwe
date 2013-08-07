@@ -693,7 +693,7 @@ def QueueCache(media, name, href, folder=''):
 
 
 	resolved_url = ShowStreamSelect(SCR, service_streams)
-
+	#print str2bool(str(resolved_url)
 	if not resolved_url:
 		msg = "Failed adding to queue: unable to resolve url"
 		Notify('Failed', msg)
@@ -859,7 +859,7 @@ def ShowStreamSelect(SCR, service_streams, auto=False):
 		options.append(stream[1])
 	stream_select = dialog.select('Select mirror', streams)
 	if stream_select < 0:
-		return -1
+		return False
 	stream = options[stream_select]
 	STREAM_SELECTION = streams[stream_select]
 	#print "Selection is: %s" % STREAM_SELECTION
