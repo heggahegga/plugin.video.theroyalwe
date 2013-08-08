@@ -686,16 +686,24 @@ def QueueCache(media, name, href, folder=''):
 			imdb = SCR.resolveIMDB(movieid=row[0])
 		SCR.getStreams(movieid=imdb)
 
-		
+	elif media=='furk':
+		href = 'furk://' + href
+		Furk = SCR.getScraperByName('furk')
+		resolved_url = Furk._resolveStream(href)
+	elif media != 'furk':
+		if reg.getBoolSetting('enable-autorank'):
+			service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
+		else:
+			service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
-	if reg.getBoolSetting('enable-autorank'):
-		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
-	else:
-		service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
-
+<<<<<<< HEAD
 	resolved_url = ShowStreamSelect(SCR, service_streams)
 	#print str2bool(str(resolved_url)
+=======
+		resolved_url = ShowStreamSelect(SCR, service_streams)
+
+>>>>>>> ea63381011c317116c85a57d0166cc5fbe9ce0cd
 	if not resolved_url:
 		msg = "Failed adding to queue: unable to resolve url"
 		Notify('Failed', msg)
@@ -1466,6 +1474,8 @@ def WatchFurkFiles():
 	files = Furk.getMyFiles()
 	for f in files:
 		commands = []
+		cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 230, f['name'], f['id'])
+		commands.append(('Cache File', cmd, ''))
 		name = f['name']
 		AddOption(name, True, 1390, name, f['id'], contextMenuItems=commands)
 	
@@ -2794,6 +2804,9 @@ elif mode==210:
 elif mode==220:
 	log('Queue Series %s, %s', (name, action))
 	QueueCacheSeries(name, action)
+elif mode==230:
+	log('Queue Furk %s, %s', (name, action))
+	QueueCache('furk', name, action)
 
 elif mode==250:
 	log('Poll Download Queue')
