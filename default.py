@@ -697,13 +697,8 @@ def QueueCache(media, name, href, folder=''):
 			service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
 
 
-<<<<<<< HEAD
 	resolved_url = ShowStreamSelect(SCR, service_streams)
-	#print str2bool(str(resolved_url)
-=======
-		resolved_url = ShowStreamSelect(SCR, service_streams)
 
->>>>>>> ea63381011c317116c85a57d0166cc5fbe9ce0cd
 	if not resolved_url:
 		msg = "Failed adding to queue: unable to resolve url"
 		Notify('Failed', msg)
@@ -1948,6 +1943,7 @@ def WatchTVNewReleases(provider=None):
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	if not provider:
 		providers = ['icefilms', '1channel', 'tubeplus', 'watchseries']
+		AddOption('Merged Releases', True, 1160, 'merged', iconImage=art+'/watch/new_episodes.jpg')
 		for provider in providers:
 			if reg.getBoolSetting('enable-' + provider):
 				AddOption(provider, True, 1160, provider, iconImage=art+'/providers/'+provider+'.jpg')
@@ -1977,12 +1973,6 @@ def WatchTVNewReleases(provider=None):
 					data=META.get_episode_meta(t, tv_meta['imdb_id'], s, e)
 					fanart = data['backdrop_url']
 					icon = ''
-					'''if data['overlay'] == 6:
-						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'true')
-						commands.append(('Mark Watched', cmd, ''))
-					elif data['overlay'] == 7:
-						cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 300, '', 'false')
-						commands.append(('Mark Unwatched', cmd, ''))'''
 					
 				t = None
 			else:
