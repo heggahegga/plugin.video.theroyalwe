@@ -1953,37 +1953,52 @@ def WatchTVNewReleases(provider=None):
 	DB.connect()
 	META = metahandlers.MetaData()
 	
-	episodes = SCR.getNewEpisodes(provider=provider)
-	
+	if provider == 'merged':
+		episodes = SCR.getNewEpisodes()
+	else:
+		episodes = SCR.getNewEpisodes(provider=provider)
+	print str(len(episodes))
 	for episode in episodes:
 		commands = []
 		t = None
-		USE_META = False
+		#USE_META = False
 		try:
 			if USE_META:
-				temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
-				if not temp: temp = re.search("^(.+?) S(\d{1,3})E(\d{1,4}): ", episode[1])
-				if not temp: temp = re.search("^(.+?) (\d{1,3})x(\d{1,4})$", episode[1])
-				if temp:
-					t = temp.group(1)
+				if episode[0]=='icefilms':
+					temp = re.search("^(.+?) (\d{1,3})x(\d{1,4}) ", episode[1])
+				elif episode[0]=='tubeplus':
+					temp = re.search("^(.+?) S(\d{1,3})E(\d{1,4}): ", episode[1])
+				elif episode[0]=='1channel':
+					temp = re.search("^(.+?) (\d{1,3})x(\d{1,4})$", episode[1])
+				elif episode[0]=='watchseries':
+					temp = re.search("^(.+?) Seas\. (\d{1,3}) Ep\. (\d{1,4})$", episode[1])
+				else:
+					temp = None
+		
+				try:
+					showname = temp.group(1)
 					s = int(temp.group(2))				
 					e = int(temp.group(3))
-				if t:
-					tv_meta = META.get_meta('tvshow',t)
-					data=META.get_episode_meta(t, tv_meta['imdb_id'], s, e)
+					tv_meta = META.get_meta('tvshow',showname)
+					data=META.get_episode_meta(showname, tv_meta['imdb_id'], s, e)
 					fanart = data['backdrop_url']
+					icon = data['cover_url']
+					title = "%s %sx%s %s" % (showname, s, e, data['title'])
+				except:
+					data = None
 					icon = ''
-					
-				t = None
+					fanart = ''
+					title = episode[1]
 			else:
 				data = None
 				icon = ''
 				fanart = ''
+				title = episode[1]
 			link = "%s://%s" % (episode[0], episode[2])
-			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(episode[1]), urllib.quote_plus(link))
+			cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 200, urllib.quote_plus(title), urllib.quote_plus(link))
 			
 			commands.append(('Cache Episode', cmd, ''))
-			AddOption(episode[1], True, 60, episode[1], link, iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
+			AddOption(title, True, 60, title, link, iconImage=icon, fanart=fanart, meta=data, contextMenuItems=commands)
 		except Exception, e:
 			print e
 			icon = ''
