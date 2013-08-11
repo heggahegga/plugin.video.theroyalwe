@@ -1119,9 +1119,9 @@ def DeleteAllSubscriptions(): #2430
 	dialog = xbmcgui.Dialog()
 	if dialog.yesno("Delete Subscriptions", "Do you want to unsubscribe to all shows?"):
 		log("Unsubscribing to All", level=0)
-		#DB.connect()
-		#DB.execute("DELETE FROM rw_subscriptions")
-		#DB.commit()
+		DB.connect()
+		DB.execute("DELETE FROM rw_subscriptions")
+		DB.commit()
 		# loop through above #
 
 def UpdateSingleShow(showid, name):
@@ -2299,7 +2299,7 @@ def ManageTVMenu():
 	AddOption('Subscribe to TV Shows',True, 1100, iconImage=art+'/manage/subscribe.jpg')
 	AddOption('Update TV Show Subscriptions',False, 2130, iconImage=art+'/manage/update_subscriptions.jpg')	
 	AddOption('Cache Available TV Shows',False, 2140, iconImage=art+'/manage/cache_available_tvshows.jpg')	
-	AddOption('Delete All Subscriptions',False, 2150, iconImage=art+'/manage/delete_all_subscriptions.jpg')
+	AddOption('Delete All Subscriptions',False, 2160, iconImage=art+'/manage/delete_all_subscriptions.jpg')
 	setView('default-folder-view')
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
@@ -3010,6 +3010,9 @@ elif mode==2140:
 elif mode==2150:
 	log('Cache Movie List')
 	UpdateAvailableMovies()
+elif mode==2160:
+	log('Delete all subscriptions')
+	DeleteAllSubscriptions()
 
 elif mode==2200:
 	log('Manage Movie Menu')
