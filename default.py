@@ -690,12 +690,13 @@ def QueueCache(media, name, href, folder=''):
 		href = 'furk://' + href
 		Furk = SCR.getScraperByName('furk')
 		resolved_url = Furk._resolveStream(href)
-	elif media != 'furk':
+	
+	if media != 'furk':
 		if reg.getBoolSetting('enable-autorank'):
 			service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=? ORDER BY priority ASC", [reg.getSetting('machine-id')], force_double_array=True)
 		else:
 			service_streams = DB.query("SELECT stream, url from rw_stream_list WHERE machineid=?", [reg.getSetting('machine-id')], force_double_array=True)
-
+	
 
 	resolved_url = ShowStreamSelect(SCR, service_streams)
 
@@ -2407,13 +2408,19 @@ def DeleteCachedFile(media, filename):
 	print filename
 	if media == 'movie':
 		path = os.path.join(xbmc.translatePath(CACHED_MOVIE_ROOT), filename)
-	if media == 'tvshow':
+	elif media == 'tvshow':
+		path = filename #os.path.join(xbmc.translatePath(CACHED_TVSHOW_ROOT), filename)
+	elif media == 'folder':
 		path = os.path.join(xbmc.translatePath(CACHED_TVSHOW_ROOT), filename)
+
 	msg = '***Confirm file deteltion***'
 	msg2 = 'Are you sure?'
 	dialog = xbmcgui.Dialog()
 	if dialog.yesno(msg, msg2, path):
-		os.remove(path)
+		if media=='folder':
+			shutil.rmtree(path)		
+		else:
+			os.remove(path)
 		xbmc.executebuiltin("Container.Refresh")
 
 def WatchCachedMenu():
@@ -2454,10 +2461,10 @@ def CachedTVShows(tvshow=''):
 				commands.append(('Delete Folder', cmd, ''))
 				AddOption(tvshow, True, 5410, tvshow, contextMenuItems=commands)
 			else:
-				print url
+				#print url
 				log('Listing file: %s' % tvshow)
 				commands = []
-				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'tvshow', tvshow)			
+				cmd = 'XBMC.RunPlugin(%s?mode=%s&name=%s&action=%s)' % (sys.argv[0], 5490, 'tvshow', url)			
 				commands.append(('Delete TV Show', cmd, ''))
 				AddOption(tvshow, False, 70, tvshow, url, contextMenuItems=commands)
 	except Exception as e:
