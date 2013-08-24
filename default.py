@@ -2,34 +2,28 @@
 #TheRoyalWe
 #
 
+ADDON_ID = 'plugin.video.theroyalwe'
+ADDON_NAME = 'The Royal We'
+
+
 ############################
 ### Imports		 ###
 ############################	
-
-
 
 import urllib2, urllib, sys, os, re, random, copy, shutil
 import xbmc,xbmcplugin,xbmcgui,xbmcaddon
 import HTMLParser
 from donnie import htmlcleaner
 from urllib import quote_plus
-#from t0mm0.common.net import Net
 from t0mm0.common.addon import Addon
 from metahandler import metahandlers
-#net = Net()
-
-ADDON_ID = 'plugin.video.theroyalwe'
-ADDON_NAME = 'The Royal We'
-ADDON = xbmcaddon.Addon(id=ADDON_ID)
-selfAddon = ADDON
-addon = Addon(ADDON_ID)
-rootpath = selfAddon.getAddonInfo('path')
-VERSION = selfAddon.getAddonInfo('version')
-#sys.path.append( os.path.join( rootpath, 'resources', 'lib' ) )
-art = rootpath+'/resources/artwork'
-#art = 'http://dudehere-repository.googlecode.com/git/artwork'
 from BeautifulSoup import BeautifulSoup, Tag, NavigableString
+
 from donnie import scrapers
+from donnie.vfs import Vfs
+
+vfs = Vfs()
+
 try: 
 	import simplejson as json
 except ImportError: 
@@ -39,6 +33,13 @@ except ImportError:
 ### Enviornment		 ###
 ############################
 
+addon = Addon(ADDON_ID)
+addon_path = addon.get_path()
+profile_path = addon.get_profile()
+ADDON = xbmcaddon.Addon(id=ADDON_ID)
+VERSION = ADDON.getAddonInfo('version')
+rootpath = addon_path
+art = os.path.join(xbmc.translatePath(rootpath + '/resources/artwork'), '')
 
 datapath = addon.get_profile()
 cookie_path = os.path.join(xbmc.translatePath(datapath + 'cookies'), '')
@@ -84,7 +85,6 @@ USE_META = reg.getBoolSetting('enable-metadata')
 
 MOVIES_DATA_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'movies_data'), '')
 TV_SHOWS_DATA_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'tvshows_data'), '')
-#DOWNLOAD_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'download'), '')
 RECENTLY_AIRED_PATH = os.path.join(xbmc.translatePath('special://profile'), 'playlists/video/RecentlyAired.xsp')
 EXCLUDE_PROBLEM_EPISODES = True
 AZ_DIRECTORIES = ['#1234', 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y', 'Z']
@@ -244,11 +244,22 @@ def removeYear(s, regex='( \(\d{4}\))$'):
 	return s
 	
 def DoSearch(msg):
+	stype = ''
+	if msg == 'TV Show Search':
+		stype = 'tvshow'
+	elif msg == 'Movie Search':
+		stype = 'movie'
+	elif msg == 'Search Furk.net':
+		stype = 'furk'
 	kb = xbmc.Keyboard('', msg, False)
     	kb.doModal()
 	if (kb.isConfirmed()):
         	search = kb.getText()
         	if search != '':
+			if stype:
+				DB.connect()
+				DB.execute("INSERT INTO rw_search_history(type, query) VALUES(?,?)", [stype, search])
+				DB.commit()
 			return search
 		else:
 			return False
@@ -396,7 +407,8 @@ def log(msg, v=None, level=1, error=False):
 
 def readfile(path, soup=False):
 	try:
-		file = open(path, 'r')
+		#file = open(path, 'r')
+		file = vfs.open(path, 'r')
 		content=file.read()
 		file.close()
 		if soup:
@@ -410,7 +422,8 @@ def readfile(path, soup=False):
 
 def writefile(path, content):
 	try:
-		file = open(path, 'w')
+		#file = open(path, 'w')
+		file = vfs.open(path, 'w')
 		file.write(content)
 		file.close()
 		return True
@@ -546,10 +559,11 @@ def SetupLibrary():
 	source_path = os.path.join(xbmc.translatePath('special://profile/'), 'sources.xml')
 	
 	try:
-		file = open(source_path, 'r')
-		content=file.read()
-		file.close()
-		soup = BeautifulSoup(content)
+		#file = open(source_path, 'r')
+		#content=file.read()
+		#file.close()
+		#soup = BeautifulSoup(content)
+		soup = readfile(source_path, soup=True)
 	except:
 		soup = BeautifulSoup()
 		sources_tag = Tag(soup, "sources")
@@ -591,9 +605,10 @@ def SetupLibrary():
 	for i in soup:
 		string = string + str(i)
 	
-	file = open(source_path, 'w')
-	file.write(str(soup))
-	file.close()
+	#file = open(source_path, 'w')
+	#file.write(str(soup))
+	#file.close()
+	writefile(source_path, str(soup))
 	log("Source paths added!")
 	
 	dialog = xbmcgui.Dialog()
@@ -1222,11 +1237,11 @@ def UpdateProviderByName(service, commands='all'):
 	DB.commit()
 
 def checkUpdateStatus():
-	try:
-		row = DB.query("SELECT updating FROM rw_status")
-		if row[0] == 1:
-			return True
-	except: pass
+	#try:
+	row = DB.query("SELECT updating FROM rw_status")
+	if row[0] == 1:
+		return True
+	#except: pass
 	return False
 
 def updateJobStatus(job):
@@ -1272,6 +1287,7 @@ def AutoUpdateSubscriptions():
 	log("Updating TV Show Subscriptions", level=0)
 	UpdateTVSubscriptions(silent=True)
 	while checkUpdateStatus():
+		print "waiting for update to finish"
 		xbmc.sleep(30000)
 	log("Update Complete!", level=0)
 	UpateVideoLibrary()
@@ -1483,6 +1499,9 @@ def WatchFurkSearch():
 	SCR = scrapers.CommonScraper(ADDON_ID, DB, reg)
 	Furk = SCR.getScraperByName('furk')
 	files = Furk.search(q)
+	if not files:
+		Notify('Furk Results', 'Furk returned no matches!')
+		return
 	for f in files:
 		commands = []
 		AddOption(f[0], True, 1390, f[0], f[1], contextMenuItems=commands)
@@ -2324,16 +2343,17 @@ def SupportMenu():
 
 def FAQMenu():
 	faq = xbmcpath(rootpath, 'resources/faq.xml')
-	file = open(faq, 'r')
-	content=file.read()
-	file.close()
-	soup = BeautifulSoup(content)
+	#file = open(faq, 'r')
+	#content=file.read()
+	#file.close()
+	#soup = BeautifulSoup(content)
+	soup = readfile(faq, soup=True)
 	headings = soup.findAll('heading')
 	for heading in headings:
 		title = heading['title']
 		id = heading['id']
 		AddOption(title, False, 3210, id, iconImage=art+'/support/faq.jpg')
-	setView('default-folder-view')
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 
@@ -2392,7 +2412,7 @@ def ListProviders():
 		name = "[B]%s.[/B] %s - %s" % (row[2], row[0], row[1])
 		key = "%s:%s:%s - %s" % (row[3], row[2], row[0], row[1])
 		AddOption(name,False, 4330, key)
-	setView('default-folder-view')
+	setView('custom', viewid=50)
 	xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def WalterMenu():
@@ -3072,7 +3092,7 @@ elif mode==4000:
 	SettingsMenu()
 elif mode==4100:
 	log('TRW Settings')
-	selfAddon.openSettings()
+	xbmcaddon.Addon(id='plugin.video.theroyalwe').openSettings()
 elif mode==4200:
 	log('Donnie Settings')
 	xbmcaddon.Addon(id='script.module.donnie').openSettings()
