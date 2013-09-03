@@ -1,3 +1,12 @@
+[B]Version 0.4.28[/B]
+Updated billionuploads again
+Added epishare
+Added xbmcvfs support
+Walter support for caching, streaming, saved state
+Started search string caching
+Started shared settings for network install
+Hopefully fixed windows path issues
+
 [B]Version 0.3.10[/B]
 BETA 3 -fixed install let's hope.
 
