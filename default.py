@@ -228,8 +228,8 @@ class TextBox:
 
 
 def showWelcome(version):
-	changelog = readfile(os.path.join(xbmc.translatePath(rootpath), 'changelog.txt'))
-	path = os.path.join(xbmc.translatePath(rootpath + '/resources'), 'welcome.html')
+	changelog = readfile(xbmcpath(rootpath, 'changelog.txt'))	
+	path = xbmcpath(rootpath + '/resources', 'welcome.html')
 	text = readfile(path)
 	text += '\n[COLOR red][B]Changelog[/B][/COLOR]\n\n' + changelog
 	text = 'The Royal We has been updated to version %s.\n\n%s' % (version, text) 
@@ -326,8 +326,9 @@ def sys_exit():
 
 
 def xbmcpath(path,filename):
-     translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
-     return translatedpath
+	path = path.replace('/', os.sep)
+     	translatedpath = os.path.join(xbmc.translatePath( path ), ''+filename+'')
+     	return translatedpath
 
 def showQuote(msg=''):
 	filepath = xbmcpath(DATA_PATH+'/resources/', 'quotes.txt')
@@ -1237,11 +1238,11 @@ def UpdateProviderByName(service, commands='all'):
 	DB.commit()
 
 def checkUpdateStatus():
-	#try:
-	row = DB.query("SELECT updating FROM rw_status")
-	if row[0] == 1:
-		return True
-	#except: pass
+	try:
+		row = DB.query("SELECT updating FROM rw_status")
+		if row[0] == 1:
+			return True
+	except: pass
 	return False
 
 def updateJobStatus(job):
