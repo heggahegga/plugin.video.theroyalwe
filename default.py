@@ -1,6 +1,22 @@
 #!/usr/bin/python
-#TheRoyalWe
-#
+"""
+	'The Royal We` and all other works herein
+
+	Copyright (C) 2013 DudeHere
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 ADDON_ID = 'plugin.video.theroyalwe'
 ADDON_NAME = 'The Royal We'
@@ -50,6 +66,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/' + ADDON_ID), '')
 SITE_REFERRER = 'xbmc.org'
 STREAM_SELECTION = ''
+PERCENT_MET = 1
 
 ############################
 ### Settings		 ###
@@ -73,11 +90,6 @@ if reg.getBoolSetting('tv_show_custom_directory'):
 	TV_SHOWS_PATH = reg.getSetting('tv_show_directory')
 else:
 	TV_SHOWS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'tvshows'), '')
-
-'''if reg.getBoolSetting('donwload_custom_directory'):
-	DOWNLOADS_PATH = reg.getSetting('download_directory')
-else:
-	DOWNLOADS_PATH = os.path.join(xbmc.translatePath(DATA_PATH + 'downloads'), '')'''
 
 USE_META = reg.getBoolSetting('enable-metadata')
 
@@ -110,14 +122,16 @@ else:
 
 from donnie.databaseconnector import DataConnector
 
-Connector = DataConnector()
+'''Connector = DataConnector()
 if Connector.getSetting('database_mysql')=='true':
 	DB_TYPE = 'mysql'
 else:
 	DB_TYPE = 'sqlite'
 DB = Connector.GetConnector()
-VDB = Connector.GetVDBConnector()
+VDB = Connector.GetVDBConnector()'''
 
+
+from donnie.functions import *
 
 def BackupDatabase():
 	createUpdate = False
@@ -782,25 +796,26 @@ def LaunchStream(path, episodeid=None, movieid=None, ignore_prefered = False):
 
 	if episodeid:
 		if DB_TYPE == 'mysql':
-			SQL = "SELECT CONCAT(rw_shows.showname, ' ', rw_episodes.season, 'x', rw_episodes.episode, ' ',  rw_episodes.name) AS name FROM rw_episodes JOIN rw_shows ON rw_episodes.showid=rw_shows.showid WHERE episodeid=? LIMIT 1"
+			SQL = "SELECT CONCAT(rw_shows.showname, ' ', rw_episodes.season, 'x', rw_episodes.episode, ' ',  rw_episodes.name) AS name, rw_shows.imdb, rw_episodes.season, rw_episodes.episode FROM rw_episodes JOIN rw_shows ON rw_episodes.showid=rw_shows.showid WHERE episodeid=? LIMIT 1"
 		else:
-			SQL = "SELECT rw_shows.showname || ' ' || rw_episodes.season || 'x' || rw_episodes.episode || ' ' ||  rw_episodes.name AS name FROM rw_episodes JOIN rw_shows ON rw_episodes.showid=rw_shows.showid WHERE episodeid=? LIMIT 1"
+			SQL = "SELECT rw_shows.showname || ' ' || rw_episodes.season || 'x' || rw_episodes.episode || ' ' ||  rw_episodes.name AS name, rw_shows.imdb, rw_episodes.season, rw_episodes.episode FROM rw_episodes JOIN rw_shows ON rw_episodes.showid=rw_shows.showid WHERE episodeid=? LIMIT 1"
 		row = DB.query(SQL, [episodeid])
 		name = row[0]
 		media='tvshow'
+		metadata = {'title': name, 'imdb_id': row[1], 'media_type': 'tvshow', 'season': row[2], 'episode': row[3]}
 	if movieid:
 		row = DB.query("SELECT rw_movies.movie FROM rw_movies WHERE imdb=? LIMIT 1", [movieid])
 		name = row[0]
 		media='movie'
+		metadata = {'title': name, 'imdb_id': movieid, 'media_type': 'movie', 'season': '', 'episode': ''}
 	try:
 		VDB.videoLibraryConnect()
-		idFile = VDB.setWatchedFlag(path)
+		idFile = VDB.getIdFile(path)[0]
 	except: 
 		idFile = None
-
 	setLastPath(_path)
-	try:	
-		StreamSource(name,resolved_url, media=media, idFile=idFile)
+	try:
+		StreamSource(name,resolved_url, media=media, idFile=idFile, metadata=metadata)
 	except:
 		Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
 		log("Failed launching stream")
@@ -863,12 +878,12 @@ def WatchStream(name, action, ignore_prefered = False, metadata = None):
 			log("Stream selection aborted")
 			return False
 	setLastPath(_name)
-	try:	
-		log("Attempting to stream: %s", resolved_url)
-		WatchStreamSource(name,resolved_url, metadata=metadata)
-	except:
-		log("Failed launching stream: %s", resolved_url, level=0)
-		Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
+	#try:	
+	log("Attempting to stream: %s", resolved_url)
+	WatchStreamSource(name,resolved_url, metadata=metadata)
+	#except:
+	#	log("Failed launching stream: %s", resolved_url, level=0)
+	#	Notify('Streaming Error!', 'File likely removed from host, try a different Stream')
 
 
 def ShowStreamSelect(SCR, service_streams, auto=False):
@@ -930,14 +945,15 @@ def WatchEpisode(name, action, ignore_prefered = False):
 		Notify('Streaming Error!', 'Selected mirror bailed, try a different Stream')
 
 
-def StreamSource(name,url, media=None, idFile=None):
+def StreamSource(name,url, media=None, idFile=None, metadata = None):
 	log('Attempting to stream url: %s' % str(url))	
 	#WaitIf()
 	try:
+		VDB.videoLibraryConnect()
 		meta = VDB.getMetaData(media, idFile)
-		log(meta)
 	except: 
 		meta = None
+
 	if meta:
 		icon = meta['icon_url']
 		thumb = meta['poster_url']
@@ -961,7 +977,13 @@ def StreamSource(name,url, media=None, idFile=None):
 
 	try:
 		from walter.streaming import StreamClass
-		S = StreamClass(url, title, info=infoLabels, hashstring=title).play(strm=True)
+		S = StreamClass(url, title, info=infoLabels, hashstring=title, metadata=metadata)
+		percent = S.play(strm=True)
+		
+		if int(percent) > PERCENT_MET:
+			print percent
+			print metadata
+			changeWatchStatus(metadata['media_type'], metadata, False)
 		return True
 	except:
 		log('Streaming failed to launch, no response from servier')
@@ -982,14 +1004,19 @@ def WatchStreamSource(name, url, idFile=None, metadata=None):
 		'icon': icon,
 		'thumb': thumb
 	}
-	try:
-		from walter.streaming import StreamClass
-		S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
-		return True
-	except:
-		log('Streaming failed to launch, no response from server')
-		Notify("Streaming failed", "Streaming failed")
-		return False
+	#try:
+	from walter.streaming import StreamClass
+	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata)
+	percent = S.play(strm=False)
+	if int(percent) > PERCENT_MET:
+		print percent
+		print metadata
+		changeWatchStatus(metadata['video_type'], metadata, True)
+	return True
+	#except:
+	#	log('Streaming failed to launch, no response from server')
+	#	Notify("Streaming failed", "Streaming failed")
+	#	return False
 
 def WatchURL(name, url, furk=False):
 	infoLabels = {
@@ -1008,7 +1035,8 @@ def WatchURL(name, url, furk=False):
 		url = Furk._resolveStream(stream)
 
 	from walter.streaming import StreamClass
-	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata).play(strm=False)
+	S = StreamClass(url, name, info=infoLabels, hashstring=name, metadata=metadata)
+	percent = S.play(strm=False)
 
 def playYouTube(vid):
 	url = 'plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vid
@@ -1020,17 +1048,34 @@ def playYouTube(vid):
 	playlist.add(url, list_item)
 	xbmc.Player().play(playlist)
 
-def changeWatchStatus(media_type, action):
+'''def formatStrPath(showname, season, episode):
+	strpath = xbmcpath(TV_SHOWS_PATH, showname)
+	strpath = xbmcpath(strpath, 'Season %s' % season)
+	strfile = '%sx%s Episode.strm' % (season, episode.zfill(2))
+	strpath = xbmcpath(strpath, strfile)
+	return strpath
 
-	#j = json.dumps(str(action})
+'''
+
+'''def changeWatchStatus(media_type, action, refresh=True):
 	data = json.loads(action)
-	print data[0]
-	#print data['imdb_id']
-	#data = json.loads()
-	#print j['episode']
+	strpath = formatStrPath(data[0], data[2], data[3])
+	try:
+		VDB.videoLibraryConnect()
+		strpath = formatStrPath(data[0], data[2], data[3])
+		print strpath
+		return
+		if data[4]=='6':
+			
+			idFile = VDB.setWatchedFlag(strpath, False)
+		else:
+			idFile = VDB.setWatchedFlag(strpath, True)
+	except: pass
+	return
 	META = metahandlers.MetaData()
 	META.change_watched(media_type, data[0], data[1], season=data[2], episode=data[3], year='', watched=data[4])
-        xbmc.executebuiltin("XBMC.Container.Refresh")
+        if refresh:	
+		xbmc.executebuiltin("XBMC.Container.Refresh")'''
 
 ###########################
 ### Subscriptions	###
@@ -1307,7 +1352,7 @@ def DownloadArtwork():
 def AutoUpdateTVShows():
 	log("Updating TV Shows", level=0)
 	UpdateAvailableTVShows(silent=True)
-
+TV_SHOWS_PATH
 def AutoUpdateMovies():
 	log("Updating Movies", level=0)
 	UpdateAvailableMovies(silent=True)

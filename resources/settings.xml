@@ -1,6 +1,7 @@
 <settings>
 	<category label="General">
 		<setting id="enable-silent-updates" type="bool" label="30001" default="false"/>
+		<setting id="enable-automark" type="bool" label="30010" default="false"/>
 		<setting id="enable-autorank" type="bool" label="30002" default="false"/>
 		<setting id="enable-autoplay" type="bool" label="30003" default="false"  visible="!eq(-1,false)" enable="!eq(-1,false)"/>
 		<setting id="prefer-hd" type="bool" label="30004" default="false"/>

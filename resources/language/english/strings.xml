@@ -8,6 +8,7 @@
 	<string id="30005">Enable mirror caching</string>
 	<string id="30006">    Cached mirrors expire in (Hours)</string>
 	<string id="30007">Enable MetaData</string>
+	<string id="30010">Enable automark</string>
 	<!-- Support -->
 	<string id="30008">Logging Level</string>
 	<!-- Providers -->
